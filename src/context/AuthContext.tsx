@@ -8,6 +8,7 @@ interface AuthContextType {
     session: Session | null;
     user: User | null;
     profile: UserProfile | null;
+    mdaName: string | null;
     loading: boolean;
     signOut: () => Promise<void>;
 }
@@ -18,6 +19,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [session, setSession] = useState<Session | null>(null);
     const [user, setUser] = useState<User | null>(null);
     const [profile, setProfile] = useState<UserProfile | null>(null);
+    const [mdaName, setMdaName] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -44,6 +46,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 fetchProfile(session.user.id);
             } else {
                 setProfile(null);
+                setMdaName(null);
                 setLoading(false);
             }
         });
@@ -59,10 +62,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 .eq('id', userId)
                 .single();
 
-            if (error) {
+            const profileData = data as UserProfile | null;
+
+            if (error || !profileData) {
                 console.error('Error fetching profile:', error);
             } else {
-                setProfile(data);
+                setProfile(profileData);
+
+                // Fetch MDA name if mda_id exists
+                if (profileData.mda_id) {
+                    const { data: mdaRes, error: mdaError } = await supabase
+                        .from('mdas')
+                        .select('name')
+                        .eq('id', profileData.mda_id)
+                        .single();
+
+                    const mdaData = mdaRes as { name: string } | null;
+
+                    if (mdaError) {
+                        console.error('Error fetching MDA:', mdaError);
+                    } else if (mdaData) {
+                        setMdaName(mdaData.name);
+                    }
+                } else {
+                    setMdaName(null);
+                }
             }
         } catch (error) {
             console.error('Unexpected error fetching profile:', error);
@@ -74,6 +98,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const signOut = async () => {
         await supabase.auth.signOut();
         setProfile(null);
+        setMdaName(null);
         setSession(null);
         setUser(null);
     };
@@ -82,6 +107,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         session,
         user,
         profile,
+        mdaName,
         loading,
         signOut,
     };

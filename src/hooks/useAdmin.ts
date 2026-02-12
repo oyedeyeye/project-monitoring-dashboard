@@ -55,7 +55,7 @@ export const useAdmin = () => {
             email,
             password: 'GenericPassword123!', // Required placeholder
             options: {
-                data: { full_name: fullName, role, mda_id: mdaId }
+                data: { full_name: fullName, role, mda_id: mdaId } as any
             }
         });
 
@@ -63,7 +63,7 @@ export const useAdmin = () => {
 
         // If trigger doesn't exist, manually insert profile
         if (data.user) {
-            const { error: profileError } = await supabase.from('profiles').insert({
+            const { error: profileError } = await (supabase.from('profiles') as any).insert({
                 id: data.user.id,
                 full_name: fullName,
                 role: role,

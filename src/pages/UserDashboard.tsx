@@ -8,8 +8,11 @@ import UpdateModal from '../components/UpdateModal';
 import { Project } from '../types/supabase';
 import { PlusCircle } from 'lucide-react';
 
+import { useAuth } from '../context/AuthContext';
+
 const UserDashboard = () => {
     const { projects, loading, error, refetch } = useProjects();
+    const { mdaName } = useAuth();
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -65,7 +68,14 @@ const UserDashboard = () => {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-800">My Projects</h1>
+                    <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                        My Projects
+                        {mdaName && (
+                            <span className="px-3 py-1 bg-blue-50 text-blue-700 text-sm font-medium rounded-full border border-blue-100">
+                                {mdaName}
+                            </span>
+                        )}
+                    </h1>
                     <p className="text-gray-500 mt-1">Manage and update your assigned projects.</p>
                 </div>
                 <Button onClick={() => refetch()} variant="ghost" size="sm">

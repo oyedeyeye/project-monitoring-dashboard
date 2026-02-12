@@ -6,11 +6,14 @@ import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import NewUserModal from '../components/NewUserModal';
-import { UserProfile, MDA } from '../types/supabase';
+import { UserProfile } from '../types/supabase';
 import { UserPlus } from 'lucide-react';
+
+import { useAuth } from '../context/AuthContext';
 
 const AdminDashboard = () => {
     const { users, mdas, loading, error, refetch } = useAdmin();
+    const { mdaName } = useAuth();
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const getMDAName = (mdaId: string | null) => {
@@ -46,7 +49,14 @@ const AdminDashboard = () => {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-800">Admin Dashboard</h1>
+                    <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                        Admin Dashboard
+                        {mdaName && (
+                            <span className="px-3 py-1 bg-blue-50 text-blue-700 text-sm font-medium rounded-full border border-blue-100">
+                                {mdaName}
+                            </span>
+                        )}
+                    </h1>
                     <p className="text-gray-500 mt-1">Manage system users and configurations.</p>
                 </div>
                 <div className="flex gap-2">

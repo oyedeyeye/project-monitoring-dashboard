@@ -8,8 +8,11 @@ import Card from '../components/ui/Card';
 import { ProgressUpdate } from '../types/supabase';
 import { CheckCircle } from 'lucide-react';
 
+import { useAuth } from '../context/AuthContext';
+
 const ApproverDashboard = () => {
     const { reports, loading, error, approveReport, refetch } = useReports();
+    const { mdaName } = useAuth();
     const [actionLoading, setActionLoading] = useState<string | null>(null);
 
     const handleApprove = async (reportId: string) => {
@@ -78,7 +81,14 @@ const ApproverDashboard = () => {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-800">Approvals</h1>
+                    <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                        Approvals
+                        {mdaName && (
+                            <span className="px-3 py-1 bg-blue-50 text-blue-700 text-sm font-medium rounded-full border border-blue-100">
+                                {mdaName}
+                            </span>
+                        )}
+                    </h1>
                     <p className="text-gray-500 mt-1">Review and approve project progress reports.</p>
                 </div>
                 <Button onClick={() => refetch()} variant="ghost" size="sm">

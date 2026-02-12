@@ -50,8 +50,8 @@ export const useReports = () => {
     const approveReport = async (reportId: string) => {
         try {
             // Logic for approval - currently updating milestone_status as placeholder
-            const { error } = await supabase
-                .from('progress_updates')
+            const { error } = await (supabase
+                .from('progress_updates') as any)
                 .update({ milestone_status: 'Approved' })
                 .eq('id', reportId);
 

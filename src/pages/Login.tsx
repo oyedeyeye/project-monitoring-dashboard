@@ -43,7 +43,7 @@ const Login = () => {
                 }
 
                 // Explicitly cast or handle the type if inference fails
-                const userRole = profileData?.role;
+                const userRole = (profileData as any)?.role;
                 console.log('Login: Redirecting based on role:', userRole);
 
                 if (userRole === 'super_user') {

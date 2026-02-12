@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
+
 import { supabase } from '../lib/supabase';
 import Modal from './ui/Modal';
 import Button from './ui/Button';
@@ -43,7 +43,7 @@ const UpdateModal = ({ isOpen, onClose, projectId, projectTitle, onSuccess }: Up
                 milestone_status: formData.milestone_status,
                 key_update: formData.key_update,
                 evidence_link: formData.evidence_link || null,
-            });
+            } as unknown as any);
 
             if (error) throw error;
 
