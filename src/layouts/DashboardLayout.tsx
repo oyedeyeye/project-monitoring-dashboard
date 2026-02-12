@@ -1,7 +1,8 @@
 
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LogOut, LayoutDashboard, FileText, Settings, Database, Users } from 'lucide-react';
+import clsx from 'clsx';
 
 const DashboardLayout = () => {
     const { profile, signOut } = useAuth();
@@ -12,12 +13,21 @@ const DashboardLayout = () => {
         navigate('/');
     };
 
+    const linkClass = ({ isActive }: { isActive: boolean }) =>
+        clsx(
+            "flex items-center px-4 py-3 rounded-lg transition-colors font-medium",
+            isActive
+                ? "text-orange-700 bg-orange-50"
+                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+        );
+
     return (
         <div className="flex h-screen bg-gray-50">
             {/* Sidebar */}
-            <aside className="w-64 bg-white border-r border-gray-200 hidden md:flex flex-col">
-                <div className="p-6 border-b border-gray-100 flex items-center justify-center">
-                    <img src="/ONDO STATE Logo.png" alt="Ondo Logo" className="h-12 w-auto" />
+            <aside className="w-64 bg-white border-r border-gray-200 hidden md:flex flex-col shadow-sm z-10">
+                <div className="p-6 border-b border-gray-100 flex flex-col items-center justify-center">
+                    <img src="/ONDO STATE Logo.png" alt="Ondo Logo" className="h-[60px] w-auto mb-2 object-contain" />
+                    <span className="text-xs font-bold text-gray-400 tracking-wider">PPMIU ANALYTICS</span>
                 </div>
 
                 <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
@@ -25,44 +35,42 @@ const DashboardLayout = () => {
 
                     {profile?.role === 'user' && (
                         <>
-                            <a href="/dashboard" className="flex items-center px-4 py-3 text-gray-700 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors">
-                                <LayoutDashboard className="w-5 h-5 mr-3 text-orange-600" />
-                                <span className="font-medium">My Projects</span>
-                            </a>
-                            <a href="#" className="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
-                                <FileText className="w-5 h-5 mr-3 text-gray-500" />
-                                <span className="font-medium">History</span>
-                            </a>
+                            <NavLink to="/dashboard" className={linkClass}>
+                                <LayoutDashboard className="w-5 h-5 mr-3" />
+                                <span>My Projects</span>
+                            </NavLink>
+                            <NavLink to="/history" className={linkClass}>
+                                <FileText className="w-5 h-5 mr-3" />
+                                <span>History</span>
+                            </NavLink>
                         </>
                     )}
 
                     {profile?.role === 'approver' && (
                         <>
-                            <a href="/approvals" className="flex items-center px-4 py-3 text-gray-700 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors">
-                                <FileText className="w-5 h-5 mr-3 text-orange-600" />
-                                <span className="font-medium">Approvals</span>
-                            </a>
-                            <a href="#" className="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
-                                <Database className="w-5 h-5 mr-3 text-gray-500" />
-                                <span className="font-medium">Agency Overview</span>
-                            </a>
+                            <NavLink to="/approvals" className={linkClass}>
+                                <FileText className="w-5 h-5 mr-3" />
+                                <span>Approvals</span>
+                            </NavLink>
+                            <NavLink to="/agency-overview" className={linkClass}>
+                                <Database className="w-5 h-5 mr-3" />
+                                <span>Agency Overview</span>
+                            </NavLink>
                         </>
                     )}
 
                     {profile?.role === 'super_user' && (
                         <>
-                            <a href="/admin" className="flex items-center px-4 py-3 text-gray-700 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors">
-                                <Settings className="w-5 h-5 mr-3 text-orange-600" />
-                                <span className="font-medium">Admin Dashboard</span>
-                            </a>
-                            <a href="#" className="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
-                                <Users className="w-5 h-5 mr-3 text-gray-500" />
-                                <span className="font-medium">User Management</span>
-                            </a>
+                            <NavLink to="/admin" className={linkClass}>
+                                <Settings className="w-5 h-5 mr-3" />
+                                <span>Admin Dashboard</span>
+                            </NavLink>
+                            <NavLink to="/users" className={linkClass}>
+                                <Users className="w-5 h-5 mr-3" />
+                                <span>User Management</span>
+                            </NavLink>
                         </>
                     )}
-
-
                 </nav>
 
                 <div className="p-4 border-t border-gray-100">
