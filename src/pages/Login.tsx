@@ -1,13 +1,56 @@
-import { useState } from 'react';
+
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const navigate = useNavigate();
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        console.log('Login attempt:', { email, password });
-        // Authentication logic will go here
+        setLoading(true);
+        setError(null);
+
+        try {
+            const { data: { session }, error: authError } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
+
+            if (authError) throw authError;
+
+            if (session?.user) {
+                // Fetch profile to know where to redirect
+                const { data: profileData, error: profileError } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', session.user.id)
+                    .single();
+
+                if (profileError) {
+                    console.error('Error fetching profile:', profileError);
+                }
+
+                // Explicitly cast or handle the type if inference fails
+                const userRole = profileData?.role;
+
+                if (userRole === 'super_user') {
+                    navigate('/admin');
+                } else if (userRole === 'approver') {
+                    navigate('/approvals');
+                } else {
+                    navigate('/dashboard'); // Default for 'user' or null
+                }
+            }
+        } catch (err: any) {
+            setError(err.message || 'An unexpected error occurred');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -31,6 +74,11 @@ const Login = () => {
                 {/* Login Card */}
                 <div className="bg-white/90 backdrop-blur-md border border-black/5 rounded-[20px] p-[30px] w-full shadow-[0_10px_30px_rgba(0,0,0,0.05)]">
                     <form onSubmit={handleSubmit}>
+                        {error && (
+                            <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm">
+                                {error}
+                            </div>
+                        )}
 
                         <div className="relative mb-[15px] input-group">
                             <i className="fa-solid fa-envelope absolute left-[15px] top-1/2 -translate-y-1/2 text-[#a67c52]"></i>
@@ -62,9 +110,10 @@ const Login = () => {
 
                         <button
                             type="submit"
-                            className="w-full p-[14px] bg-gradient-to-b from-[#ff8c33] to-[#e65100] text-white border-none rounded-[30px] text-[1.1rem] font-semibold cursor-pointer shadow-[0_4px_15px_rgba(230,81,0,0.3)] transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_6px_20px_rgba(230,81,0,0.4)] mb-5"
+                            disabled={loading}
+                            className="w-full p-[14px] bg-gradient-to-b from-[#ff8c33] to-[#e65100] text-white border-none rounded-[30px] text-[1.1rem] font-semibold cursor-pointer shadow-[0_4px_15px_rgba(230,81,0,0.3)] transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_6px_20px_rgba(230,81,0,0.4)] mb-5 disabled:opacity-70 disabled:cursor-not-allowed"
                         >
-                            Sign In
+                            {loading ? 'Signing In...' : 'Sign In'}
                         </button>
 
                         <div className="flex items-center justify-center gap-2 text-[#5d4037] text-[0.85rem]">
