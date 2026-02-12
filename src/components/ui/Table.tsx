@@ -13,14 +13,16 @@ interface TableProps<T> {
     onRowClick?: (item: T) => void;
     isLoading?: boolean;
     emptyMessage?: string;
+    keyExtractor?: (item: T) => string | number;
 }
 
-function Table<T extends { id?: string | number }>({
+function Table<T>({
     data,
     columns,
     onRowClick,
     isLoading,
-    emptyMessage = "No data available."
+    emptyMessage = "No data available.",
+    keyExtractor
 }: TableProps<T>) {
 
     if (isLoading) {
@@ -52,21 +54,24 @@ function Table<T extends { id?: string | number }>({
                     </tr>
                 </thead>
                 <tbody>
-                    {data.map((item, rowIdx) => (
-                        <tr
-                            key={item.id ?? rowIdx}
-                            className={`bg-white border-b hover:bg-gray-50 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
-                            onClick={() => onRowClick && onRowClick(item)}
-                        >
-                            {columns.map((col, colIdx) => (
-                                <td key={colIdx} className="px-6 py-4">
-                                    {typeof col.accessor === 'function'
-                                        ? col.accessor(item)
-                                        : (item[col.accessor as keyof T] as React.ReactNode)}
-                                </td>
-                            ))}
-                        </tr>
-                    ))}
+                    {data.map((item, rowIdx) => {
+                        const rowKey = keyExtractor ? keyExtractor(item) : (item as any).id ?? rowIdx;
+                        return (
+                            <tr
+                                key={rowKey}
+                                className={`bg-white border-b hover:bg-gray-50 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
+                                onClick={() => onRowClick && onRowClick(item)}
+                            >
+                                {columns.map((col, colIdx) => (
+                                    <td key={colIdx} className="px-6 py-4">
+                                        {typeof col.accessor === 'function'
+                                            ? col.accessor(item)
+                                            : (item[col.accessor as keyof T] as React.ReactNode)}
+                                    </td>
+                                ))}
+                            </tr>
+                        );
+                    })}
                 </tbody>
             </table>
         </div>

@@ -84,7 +84,7 @@ export type Database = {
             };
             profiles: {
                 Row: UserProfile;
-                Insert: Omit<UserProfile, 'id'>; // ID usually comes from Auth
+                Insert: UserProfile;
                 Update: Partial<Omit<UserProfile, 'id'>>;
             };
             finance: {
