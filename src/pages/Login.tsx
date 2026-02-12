@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
@@ -14,6 +13,7 @@ const Login = () => {
         e.preventDefault();
         setLoading(true);
         setError(null);
+        console.log('Login: Attempting login for', email);
 
         try {
             const { data: { session }, error: authError } = await supabase.auth.signInWithPassword({
@@ -21,7 +21,12 @@ const Login = () => {
                 password,
             });
 
-            if (authError) throw authError;
+            if (authError) {
+                console.error('Login: Auth error:', authError.message);
+                throw authError;
+            }
+
+            console.log('Login: Auth successful, session established.');
 
             if (session?.user) {
                 // Fetch profile to know where to redirect
@@ -32,11 +37,14 @@ const Login = () => {
                     .single();
 
                 if (profileError) {
-                    console.error('Error fetching profile:', profileError);
+                    console.error('Login: Error fetching profile:', profileError);
+                } else {
+                    console.log('Login: Profile fetched:', profileData);
                 }
 
                 // Explicitly cast or handle the type if inference fails
                 const userRole = profileData?.role;
+                console.log('Login: Redirecting based on role:', userRole);
 
                 if (userRole === 'super_user') {
                     navigate('/admin');
@@ -47,6 +55,7 @@ const Login = () => {
                 }
             }
         } catch (err: any) {
+            console.error('Login: Caught error during login process:', err);
             setError(err.message || 'An unexpected error occurred');
         } finally {
             setLoading(false);

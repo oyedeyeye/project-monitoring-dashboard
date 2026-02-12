@@ -19,6 +19,7 @@ export const useReports = () => {
     }, [profile]);
 
     const fetchReports = async (mdaId: string) => {
+        console.log('useReports: Fetching reports for MDA:', mdaId);
         try {
             setLoading(true);
             // Verify join query syntax with Supabase documentation if needed. 
@@ -33,9 +34,11 @@ export const useReports = () => {
                 .order('report_date', { ascending: false });
 
             if (error) {
+                console.error('useReports: Error fetching reports:', error);
                 throw error;
             }
 
+            console.log(`useReports: Successfully fetched ${data?.length || 0} reports.`);
             setReports(data || []);
         } catch (err: any) {
             setError(err.message);

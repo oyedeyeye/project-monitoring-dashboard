@@ -14,6 +14,7 @@ export const useAdmin = () => {
     }, []);
 
     const fetchData = async () => {
+        console.log('useAdmin: Fetching admin data (users & MDAs)...');
         setLoading(true);
         try {
             const [usersRes, mdasRes] = await Promise.all([
@@ -21,9 +22,16 @@ export const useAdmin = () => {
                 supabase.from('mdas').select('*')
             ]);
 
-            if (usersRes.error) throw usersRes.error;
-            if (mdasRes.error) throw mdasRes.error;
+            if (usersRes.error) {
+                console.error('useAdmin: Error fetching users:', usersRes.error);
+                throw usersRes.error;
+            }
+            if (mdasRes.error) {
+                console.error('useAdmin: Error fetching MDAs:', mdasRes.error);
+                throw mdasRes.error;
+            }
 
+            console.log(`useAdmin: Fetched ${usersRes.data?.length || 0} users and ${mdasRes.data?.length || 0} MDAs.`);
             setUsers(usersRes.data || []);
             setMDAs(mdasRes.data || []);
         } catch (err: any) {

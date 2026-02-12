@@ -23,9 +23,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     useEffect(() => {
         // fetch session on mount
         supabase.auth.getSession().then(({ data: { session } }) => {
+            console.log('AuthContext: Initial session check:', session ? 'Session found' : 'No session');
             setSession(session);
             setUser(session?.user ?? null);
             if (session?.user) {
+                console.log('AuthContext: Fetching profile for user', session.user.id);
                 fetchProfile(session.user.id);
             } else {
                 setLoading(false);
@@ -33,7 +35,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         });
 
         // listen for auth changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            console.log(`AuthContext: Auth event '${event}'`, session ? 'Session active' : 'No session');
             setSession(session);
             setUser(session?.user ?? null);
             if (session?.user) {

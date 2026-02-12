@@ -19,6 +19,7 @@ export const useProjects = () => {
     }, [profile]);
 
     const fetchProjects = async (mdaId: string) => {
+        console.log('useProjects: Fetching projects for MDA:', mdaId);
         try {
             setLoading(true);
             const { data, error } = await supabase
@@ -27,9 +28,11 @@ export const useProjects = () => {
                 .eq('mda_id', mdaId);
 
             if (error) {
+                console.error('useProjects: Error fetching projects:', error);
                 throw error;
             }
 
+            console.log(`useProjects: Successfully fetched ${data?.length || 0} projects.`);
             setProjects(data || []);
         } catch (err: any) {
             setError(err.message);
