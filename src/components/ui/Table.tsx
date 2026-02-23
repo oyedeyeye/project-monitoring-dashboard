@@ -3,7 +3,7 @@ import React from 'react';
 
 interface Column<T> {
     header: string;
-    accessor: keyof T | ((item: T) => React.ReactNode);
+    accessor: keyof T | ((item: T, index: number) => React.ReactNode);
     className?: string;
 }
 
@@ -65,7 +65,7 @@ function Table<T>({
                                 {columns.map((col, colIdx) => (
                                     <td key={colIdx} className="px-6 py-4">
                                         {typeof col.accessor === 'function'
-                                            ? col.accessor(item)
+                                            ? col.accessor(item, rowIdx)
                                             : (item[col.accessor as keyof T] as React.ReactNode)}
                                     </td>
                                 ))}

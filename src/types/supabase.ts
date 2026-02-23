@@ -55,7 +55,8 @@ export interface Issue {
     id: string; // uuid
     project_id: string;
     log_date: string;
-    issue_type: string;
+    issue_category: string;
+    issue_item: string;
     severity: number;
     owner: string;
     due_date: string;

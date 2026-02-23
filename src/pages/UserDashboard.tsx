@@ -4,9 +4,8 @@ import Table from '../components/ui/Table';
 import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
-import UpdateModal from '../components/UpdateModal';
+import ProjectDetailsModal from '../components/ProjectDetailsModal';
 import { Project } from '../types/supabase';
-import { PlusCircle } from 'lucide-react';
 
 import { useAuth } from '../context/AuthContext';
 
@@ -16,17 +15,17 @@ const UserDashboard = () => {
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    const handleUpdateClick = (project: Project) => {
+    const handleRowClick = (project: Project) => {
         setSelectedProject(project);
         setIsModalOpen(true);
     };
 
-    const handleUpdateSuccess = () => {
-        // Optionally refresh projects or show notification
-        refetch();
-    };
-
     const columns = [
+        {
+            header: '#',
+            accessor: (_: Project, index: number) => index + 1,
+            className: 'w-12 text-gray-400 font-medium'
+        },
         { header: 'Project Title', accessor: 'title' as keyof Project, className: 'w-1/3' },
         { header: 'Location', accessor: 'location_text' as keyof Project },
         {
@@ -39,19 +38,6 @@ const UserDashboard = () => {
                 <Badge variant={item.status === 'Completed' ? 'success' : item.status === 'Ongoing' ? 'warning' : 'neutral'}>
                     {item.status}
                 </Badge>
-            )
-        },
-        {
-            header: 'Action',
-            accessor: (item: Project) => (
-                <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={(e) => { e.stopPropagation(); handleUpdateClick(item); }}
-                >
-                    <PlusCircle className="w-4 h-4 mr-1" />
-                    Update
-                </Button>
             )
         }
     ];
@@ -87,18 +73,20 @@ const UserDashboard = () => {
                 <Table
                     data={projects}
                     columns={columns}
+                    onRowClick={handleRowClick}
                     isLoading={loading}
                     emptyMessage="No projects assigned to your MDA yet."
                 />
             </Card>
 
-            <UpdateModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                projectId={selectedProject?.project_id || null}
-                projectTitle={selectedProject?.title || ''}
-                onSuccess={handleUpdateSuccess}
-            />
+            {selectedProject && isModalOpen && (
+                <ProjectDetailsModal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    project={selectedProject}
+                    onProgressUpdate={() => refetch()}
+                />
+            )}
         </div>
     );
 };
