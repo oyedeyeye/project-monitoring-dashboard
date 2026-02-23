@@ -66,5 +66,21 @@ export const useReports = () => {
         }
     };
 
-    return { reports, loading, error, approveReport, refetch: () => profile?.mda_id && fetchReports(profile.mda_id) };
+    const requestChanges = async (reportId: string) => {
+        try {
+            const { error } = await (supabase
+                .from('progress_updates') as any)
+                .update({ milestone_status: 'Changes Required' })
+                .eq('id', reportId);
+
+            if (error) throw error;
+
+            if (profile?.mda_id) fetchReports(profile.mda_id);
+        } catch (err: any) {
+            setError(err.message);
+            throw err;
+        }
+    };
+
+    return { reports, loading, error, approveReport, requestChanges, refetch: () => profile?.mda_id && fetchReports(profile.mda_id) };
 };

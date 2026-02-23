@@ -1,22 +1,25 @@
 import React, { useState } from 'react';
 import Modal from './ui/Modal';
-import { Project, Issue } from '../types/supabase';
+import { Project, ProgressUpdate } from '../types/supabase';
 import { useProjectDetails } from '../hooks/useProjectDetails';
 import Button from './ui/Button';
 import { supabase } from '../lib/supabase';
 import { ISSUE_CATEGORIES, ISSUE_CATEGORY_OPTIONS } from '../constants/issueCategories';
 import { useAuth } from '../context/AuthContext';
 import UpdateModal from './UpdateModal';
+import { useReports } from '../hooks/useReports';
 
 interface ProjectDetailsModalProps {
     isOpen: boolean;
     onClose: () => void;
     project: Project;
+    isApproverView?: boolean;
     onProgressUpdate?: () => void;
 }
 
-const ProjectDetailsModal = ({ isOpen, onClose, project, onProgressUpdate }: ProjectDetailsModalProps) => {
+const ProjectDetailsModal = ({ isOpen, onClose, project, isApproverView, onProgressUpdate }: ProjectDetailsModalProps) => {
     const { updates, issues, loading, refetch } = useProjectDetails(project.project_id);
+    const { approveReport, requestChanges } = useReports();
     const { user } = useAuth();
     const [activeTab, setActiveTab] = useState<'overview' | 'history' | 'issues'>('overview');
 
@@ -29,6 +32,8 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, onProgressUpdate }: Pro
     const [issueError, setIssueError] = useState('');
 
     const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+    const [updateToEdit, setUpdateToEdit] = useState<ProgressUpdate | null>(null);
+    const [actionLoading, setActionLoading] = useState<string | null>(null);
 
     const handleIssueSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -40,7 +45,7 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, onProgressUpdate }: Pro
 
         setIsSubmittingIssue(true);
         try {
-            const { error } = await supabase.from('issues').insert({
+            const { error } = await (supabase.from('issues') as any).insert({
                 project_id: project.project_id,
                 log_date: new Date().toISOString(),
                 issue_category: issueCategory,
@@ -64,6 +69,37 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, onProgressUpdate }: Pro
         }
     };
 
+    const handleApprove = async (reportId: string) => {
+        if (!confirm('Are you sure you want to approve this report?')) return;
+        setActionLoading(reportId);
+        try {
+            await approveReport(reportId);
+            refetch();
+            if (onProgressUpdate) onProgressUpdate();
+        } catch (error) {
+            console.error('Approval failed:', error);
+            alert('Failed to approve report.');
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleRequestChanges = async (reportId: string) => {
+        const reason = prompt('Please provide a reason or instruction for the requested changes:');
+        if (reason === null) return;
+        setActionLoading(reportId);
+        try {
+            await requestChanges(reportId);
+            refetch();
+            if (onProgressUpdate) onProgressUpdate();
+        } catch (error) {
+            console.error('Request changes failed:', error);
+            alert('Failed to return report.');
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
     const latestUpdate = updates.length > 0 ? updates[0] : null;
 
     const renderTabs = () => (
@@ -73,8 +109,8 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, onProgressUpdate }: Pro
                     key={tab}
                     onClick={() => setActiveTab(tab)}
                     className={`pb-2 px-1 text-sm font-medium capitalize ${activeTab === tab
-                            ? 'border-b-2 border-primary-600 text-primary-600'
-                            : 'text-gray-500 hover:text-gray-700'
+                        ? 'border-b-2 border-primary-600 text-primary-600'
+                        : 'text-gray-500 hover:text-gray-700'
                         }`}
                 >
                     {tab}
@@ -124,15 +160,79 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, onProgressUpdate }: Pro
                 <p className="text-gray-500 italic text-sm">No updates submitted yet.</p>
             ) : (
                 updates.map((update) => (
-                    <div key={update.id} className="border-l-2 border-primary-200 pl-4 py-2">
-                        <p className="text-xs text-gray-400 mb-1">{new Date(update.report_date).toLocaleDateString()}</p>
-                        <p className="font-medium text-gray-800 text-sm">{update.stage} - {update.physical_progress_pct}%</p>
-                        <p className="text-sm text-gray-600 mt-1">{update.key_update}</p>
-                        {update.milestone_status === 'Changes Required' && (
-                            <span className="mt-1 inline-block px-2 py-0.5 bg-red-100 text-red-800 text-xs rounded-full">
-                                Changes Required
-                            </span>
-                        )}
+                    <div key={update.id} className="border-l-2 border-primary-200 pl-4 py-2 relative group">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <p className="text-xs text-gray-400 mb-1">{new Date(update.report_date).toLocaleDateString()}</p>
+                                <p className="font-medium text-gray-800 text-sm">{update.stage} - {update.physical_progress_pct}%</p>
+                                <p className="text-sm text-gray-600 mt-1">{update.key_update}</p>
+                                {update.milestone_status === 'Changes Required' && (
+                                    <span className="mt-1 inline-block px-2 py-0.5 bg-red-100 text-red-800 text-xs rounded-full">
+                                        Changes Required
+                                    </span>
+                                )}
+                                {update.milestone_status === 'Ready for Approval' && (
+                                    <span className="mt-1 inline-block px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full">
+                                        Ready for Approval
+                                    </span>
+                                )}
+                                {update.milestone_status === 'Approved' && (
+                                    <span className="mt-1 inline-block px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded-full">
+                                        Approved
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* Staff Action */}
+                            {!isApproverView && update.milestone_status === 'Changes Required' && (
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="opacity-0 lg:opacity-100 group-hover:opacity-100 transition-opacity"
+                                    onClick={() => {
+                                        setUpdateToEdit(update);
+                                        setIsUpdateModalOpen(true);
+                                    }}
+                                >
+                                    Edit & Resubmit
+                                </Button>
+                            )}
+
+                            {/* Approver Actions */}
+                            {isApproverView && update.milestone_status === 'Ready for Approval' && (
+                                <div className="flex flex-col gap-2 opacity-0 lg:opacity-100 group-hover:opacity-100 transition-opacity">
+                                    <div className="flex gap-2">
+                                        <Button
+                                            size="sm"
+                                            variant="primary"
+                                            isLoading={actionLoading === update.id}
+                                            onClick={() => handleApprove(update.id)}
+                                        >
+                                            Approve
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="!text-red-600 !border-red-200 hover:!bg-red-50"
+                                            isLoading={actionLoading === update.id}
+                                            onClick={() => handleRequestChanges(update.id)}
+                                        >
+                                            Return
+                                        </Button>
+                                    </div>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => {
+                                            setUpdateToEdit(update);
+                                            setIsUpdateModalOpen(true);
+                                        }}
+                                    >
+                                        Edit Update Before Approving
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 ))
             )}
@@ -253,9 +353,14 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, onProgressUpdate }: Pro
                         <div className="mt-8 pt-4 border-t flex justify-between">
                             <Button variant="outline" onClick={onClose}>Close</Button>
 
-                            <Button onClick={() => setIsUpdateModalOpen(true)}>
-                                Add Progress Update
-                            </Button>
+                            {!isApproverView && (
+                                <Button onClick={() => {
+                                    setUpdateToEdit(null);
+                                    setIsUpdateModalOpen(true);
+                                }}>
+                                    Add Progress Update
+                                </Button>
+                            )}
                         </div>
                     </>
                 )}
@@ -266,6 +371,7 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, onProgressUpdate }: Pro
                 onClose={() => setIsUpdateModalOpen(false)}
                 projectId={project.project_id}
                 projectTitle={project.title}
+                existingUpdate={updateToEdit}
                 onSuccess={() => {
                     refetch();
                     setIsUpdateModalOpen(false);

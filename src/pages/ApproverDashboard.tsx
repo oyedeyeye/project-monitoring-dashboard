@@ -1,35 +1,41 @@
 
 import { useState } from 'react';
 import { useReports } from '../hooks/useReports';
+import { useProjects } from '../hooks/useProjects';
 import Table from '../components/ui/Table';
 import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
-import { ProgressUpdate } from '../types/supabase';
-import { CheckCircle } from 'lucide-react';
+import ProjectDetailsModal from '../components/ProjectDetailsModal';
+import { ProgressUpdate, Project } from '../types/supabase';
+import { Search } from 'lucide-react';
 
 import { useAuth } from '../context/AuthContext';
 
 const ApproverDashboard = () => {
-    const { reports, loading, error, approveReport, refetch } = useReports();
+    const { reports, loading, error, refetch } = useReports();
+    const { projects, loading: projectsLoading } = useProjects();
     const { mdaName } = useAuth();
-    const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-    const handleApprove = async (reportId: string) => {
-        if (!confirm('Are you sure you want to approve this report?')) return;
+    const [activeTab, setActiveTab] = useState<'pending' | 'overview' | 'history'>('pending');
 
-        setActionLoading(reportId);
-        try {
-            await approveReport(reportId);
-        } catch (error) {
-            console.error('Approval failed:', error);
-            alert('Failed to approve report.');
-        } finally {
-            setActionLoading(null);
-        }
+    const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    const handleRowClick = (updateOrProject: any) => {
+        // Map the parameter to an adequate Project shape depending on whether it's an update with joined project or just a project
+        const projectBase = updateOrProject.projects
+            ? { project_id: updateOrProject.project_id, ...updateOrProject.projects, approved_budget: 0 }
+            : updateOrProject;
+
+        setSelectedProject(projectBase);
+        setIsModalOpen(true);
     };
 
-    const columns = [
+    const pendingReports = reports.filter(r => r.milestone_status !== 'Approved');
+    const approvedReports = reports.filter(r => r.milestone_status === 'Approved');
+
+    const pendingColumns = [
         { header: 'Date', accessor: 'report_date' as keyof ProgressUpdate },
         {
             header: 'Project',
@@ -53,18 +59,40 @@ const ApproverDashboard = () => {
         },
         {
             header: 'Action',
-            accessor: (item: ProgressUpdate) => (
-                item.milestone_status !== 'Approved' && (
-                    <Button
-                        size="sm"
-                        variant="primary"
-                        isLoading={actionLoading === item.id}
-                        onClick={(e) => { e.stopPropagation(); handleApprove(item.id); }}
-                    >
-                        <CheckCircle className="w-4 h-4 mr-1" />
-                        Approve
-                    </Button>
-                )
+            accessor: () => (
+                <Button
+                    size="sm"
+                    variant="primary"
+                    className="pointer-events-none" // Action happens on row click
+                >
+                    Review
+                </Button>
+            )
+        }
+    ];
+
+    const projectColumns = [
+        { header: 'Project Title', accessor: 'title' as keyof Project, className: 'w-1/3' },
+        { header: 'Location', accessor: 'location_text' as keyof Project },
+        {
+            header: 'Status',
+            accessor: (item: Project) => (
+                <Badge variant={item.status === 'Completed' ? 'success' : item.status === 'Ongoing' ? 'warning' : 'neutral'}>
+                    {item.status}
+                </Badge>
+            )
+        },
+        {
+            header: 'Action',
+            accessor: () => (
+                <Button
+                    size="sm"
+                    variant="outline"
+                    className="pointer-events-none"
+                >
+                    <Search className="w-4 h-4 mr-1" />
+                    Details
+                </Button>
             )
         }
     ];
@@ -96,15 +124,63 @@ const ApproverDashboard = () => {
                 </Button>
             </div>
 
+            <div className="flex space-x-4 border-b border-gray-200">
+                {(['pending', 'overview', 'history'] as const).map((tab) => (
+                    <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab)}
+                        className={`pb-2 px-1 text-sm font-medium capitalize ${activeTab === tab
+                                ? 'border-b-2 border-primary-600 text-primary-600'
+                                : 'text-gray-500 hover:text-gray-700'
+                            }`}
+                    >
+                        {tab === 'pending' ? 'Pending Approvals' : tab === 'overview' ? 'Agency Overview' : 'Approval History'}
+                    </button>
+                ))}
+            </div>
+
             <Card noPadding>
-                <Table
-                    data={reports}
-                    columns={columns}
-                    isLoading={loading}
-                    emptyMessage="No pending reports found."
-                    keyExtractor={(item) => item.id}
-                />
+                {activeTab === 'pending' && (
+                    <Table
+                        data={pendingReports}
+                        columns={pendingColumns}
+                        isLoading={loading}
+                        onRowClick={handleRowClick}
+                        emptyMessage="No pending reports found."
+                        keyExtractor={(item) => item.id}
+                    />
+                )}
+                {activeTab === 'overview' && (
+                    <Table
+                        data={projects}
+                        columns={projectColumns}
+                        isLoading={projectsLoading}
+                        onRowClick={handleRowClick}
+                        emptyMessage="No projects found for this MDA."
+                        keyExtractor={(item) => item.project_id}
+                    />
+                )}
+                {activeTab === 'history' && (
+                    <Table
+                        data={approvedReports}
+                        columns={pendingColumns}
+                        isLoading={loading}
+                        onRowClick={handleRowClick}
+                        emptyMessage="No approval history yet."
+                        keyExtractor={(item) => item.id}
+                    />
+                )}
             </Card>
+
+            {selectedProject && isModalOpen && (
+                <ProjectDetailsModal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    project={selectedProject as Project}
+                    isApproverView={true}
+                    onProgressUpdate={() => refetch()}
+                />
+            )}
         </div>
     );
 };

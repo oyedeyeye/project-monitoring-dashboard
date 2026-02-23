@@ -4,19 +4,22 @@ import { supabase } from '../lib/supabase';
 import { Project } from '../types/supabase';
 import { useAuth } from '../context/AuthContext';
 
-export const useProjects = () => {
+export const useProjects = (mdaIdOverride?: string | null) => {
     const { profile } = useAuth();
     const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const targetMdaId = mdaIdOverride || profile?.mda_id;
+
     useEffect(() => {
-        if (profile?.mda_id) {
-            fetchProjects(profile.mda_id);
+        if (targetMdaId) {
+            fetchProjects(targetMdaId);
         } else {
             setLoading(false);
+            setProjects([]);
         }
-    }, [profile]);
+    }, [targetMdaId]);
 
     const fetchProjects = async (mdaId: string) => {
         console.log('useProjects: Fetching projects for MDA:', mdaId);
@@ -41,5 +44,5 @@ export const useProjects = () => {
         }
     };
 
-    return { projects, loading, error, refetch: () => profile?.mda_id && fetchProjects(profile.mda_id) };
+    return { projects, loading, error, refetch: () => targetMdaId && fetchProjects(targetMdaId) };
 };

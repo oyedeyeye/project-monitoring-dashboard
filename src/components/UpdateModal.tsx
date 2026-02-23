@@ -5,23 +5,26 @@ import { supabase } from '../lib/supabase';
 import Modal from './ui/Modal';
 import Button from './ui/Button';
 
+import { ProgressUpdate } from '../types/supabase';
+
 interface UpdateModalProps {
     isOpen: boolean;
     onClose: () => void;
     projectId: string | null;
     projectTitle: string;
+    existingUpdate?: ProgressUpdate | null;
     onSuccess: () => void;
 }
 
-const UpdateModal = ({ isOpen, onClose, projectId, projectTitle, onSuccess }: UpdateModalProps) => {
+const UpdateModal = ({ isOpen, onClose, projectId, projectTitle, existingUpdate, onSuccess }: UpdateModalProps) => {
     const [loading, setLoading] = useState(false);
+
     const [formData, setFormData] = useState({
-        report_date: new Date().toISOString().split('T')[0],
-        physical_progress_pct: 0,
-        stage: 'Execution',
-        milestone_status: 'On Track',
-        key_update: '',
-        evidence_link: '',
+        report_date: existingUpdate?.report_date.split('T')[0] || new Date().toISOString().split('T')[0],
+        physical_progress_pct: existingUpdate?.physical_progress_pct || 0,
+        stage: existingUpdate?.stage || 'Execution',
+        key_update: existingUpdate?.key_update || '',
+        evidence_link: existingUpdate?.evidence_link || '',
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -35,29 +38,38 @@ const UpdateModal = ({ isOpen, onClose, projectId, projectTitle, onSuccess }: Up
 
         setLoading(true);
         try {
-            const { error } = await supabase.from('progress_updates').insert({
+            const payload = {
                 project_id: projectId,
                 report_date: formData.report_date,
                 physical_progress_pct: Number(formData.physical_progress_pct),
                 stage: formData.stage,
-                milestone_status: formData.milestone_status,
+                milestone_status: 'Ready for Approval',
                 key_update: formData.key_update,
                 evidence_link: formData.evidence_link || null,
-            } as unknown as any);
+            };
+
+            let error;
+            if (existingUpdate) {
+                const res = await (supabase.from('progress_updates') as any).update(payload).eq('id', existingUpdate.id);
+                error = res.error;
+            } else {
+                const res = await (supabase.from('progress_updates') as any).insert([payload]);
+                error = res.error;
+            }
 
             if (error) throw error;
 
             onSuccess();
             onClose();
-            // Reset form
-            setFormData({
-                report_date: new Date().toISOString().split('T')[0],
-                physical_progress_pct: 0,
-                stage: 'Execution',
-                milestone_status: 'On Track',
-                key_update: '',
-                evidence_link: '',
-            });
+            if (!existingUpdate) {
+                setFormData({
+                    report_date: new Date().toISOString().split('T')[0],
+                    physical_progress_pct: 0,
+                    stage: 'Execution',
+                    key_update: '',
+                    evidence_link: '',
+                });
+            }
 
         } catch (error) {
             console.error('Error submitting update:', error);
@@ -68,7 +80,7 @@ const UpdateModal = ({ isOpen, onClose, projectId, projectTitle, onSuccess }: Up
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={`Update Progress: ${projectTitle}`}>
+        <Modal isOpen={isOpen} onClose={onClose} title={`${existingUpdate ? 'Edit' : 'Submit'} Progress: ${projectTitle}`}>
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Report Date</label>
