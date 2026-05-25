@@ -15,7 +15,7 @@ export interface FlattenedUser {
 export const useUsers = (initialPage = 1, initialLimit = 25) => {
     const { profile } = useAuth();
     const [users, setUsers] = useState<FlattenedUser[]>([]);
-    const [meta, setMeta] = useState<{ total: number; page: number; limit: number; totalPages: number } | null>(null);
+    const [meta, setMeta] = useState<{ total: number; page: number; limit: number; totalPages: number; total_pages: number } | null>(null);
     const [page, setPage] = useState(initialPage);
     const [limit, setLimit] = useState(initialLimit);
     const [loading, setLoading] = useState(true);
@@ -42,7 +42,17 @@ export const useUsers = (initialPage = 1, initialLimit = 25) => {
             });
 
             setUsers(mappedUsers);
-            setMeta(data?.meta || null);
+            if (data?.meta) {
+                setMeta({
+                    total: data.meta.total,
+                    page: data.meta.page,
+                    limit: data.meta.limit,
+                    totalPages: data.meta.total_pages || data.meta.totalPages || 0,
+                    total_pages: data.meta.total_pages || data.meta.totalPages || 0,
+                });
+            } else {
+                setMeta(null);
+            }
         } catch (err: any) {
             console.error('Error fetching users:', err);
             setError(err.response?.data?.message || err.message || 'Failed to fetch users');

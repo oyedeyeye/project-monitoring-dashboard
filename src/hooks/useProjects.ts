@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 export const useProjects = (mdaIdOverride?: string | null, initialPage = 1, initialLimit = 25) => {
     const { profile } = useAuth();
     const [projects, setProjects] = useState<Project[]>([]);
-    const [meta, setMeta] = useState<{ total: number; page: number; limit: number; totalPages: number } | null>(null);
+    const [meta, setMeta] = useState<{ total: number; page: number; limit: number; totalPages: number; total_pages: number } | null>(null);
     const [page, setPage] = useState(initialPage);
     const [limit, setLimit] = useState(initialLimit);
     const [loading, setLoading] = useState(true);
@@ -32,7 +32,17 @@ export const useProjects = (mdaIdOverride?: string | null, initialPage = 1, init
 
             console.log(`useProjects: Successfully fetched ${data?.data?.length || 0} projects.`);
             setProjects(data?.data || []);
-            setMeta(data?.meta || null);
+            if (data?.meta) {
+                setMeta({
+                    total: data.meta.total,
+                    page: data.meta.page,
+                    limit: data.meta.limit,
+                    totalPages: data.meta.total_pages || data.meta.totalPages || 0,
+                    total_pages: data.meta.total_pages || data.meta.totalPages || 0,
+                });
+            } else {
+                setMeta(null);
+            }
         } catch (err: any) {
             console.error('useProjects: Error fetching projects:', err);
             setError(err.response?.data?.message || err.message);

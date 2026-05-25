@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useProjects } from '../hooks/useProjects';
 import { useMdaHistory } from '../hooks/useMdaHistory';
 import Table from '../components/ui/Table';

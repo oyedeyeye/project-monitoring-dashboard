@@ -1,8 +1,7 @@
-import React from 'react';
 import Modal from './ui/Modal';
 import Button from './ui/Button';
 import { AppNotification } from '../hooks/useNotifications';
-import { Bell, Check, Trash2, MailOpen, AlertCircle } from 'lucide-react';
+import { Bell, Check, Trash2 } from 'lucide-react';
 
 interface NotificationModalProps {
     isOpen: boolean;

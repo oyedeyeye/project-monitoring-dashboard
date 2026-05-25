@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { Shield, CheckCircle } from 'lucide-react';
 import { api } from '../lib/api';
 
@@ -12,7 +12,6 @@ const ResetPassword = () => {
     
     const [searchParams] = useSearchParams();
     const token = searchParams.get('token');
-    const navigate = useNavigate();
 
     // This component doubles as both Reset and Setup.
     const isSetup = window.location.pathname === '/setup-password';

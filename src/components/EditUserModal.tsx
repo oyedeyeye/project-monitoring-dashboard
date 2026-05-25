@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Modal from './ui/Modal';
 import Button from './ui/Button';
-import { MDA, UserProfile } from '../types/api';
+import { MDA } from '../types/api';
 import { FlattenedUser } from '../hooks/useUsers';
 
 interface EditUserModalProps {
