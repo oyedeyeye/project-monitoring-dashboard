@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useAdmin } from '../hooks/useAdmin'; // Assuming useAdmin handles creation
 import Modal from './ui/Modal';
 import Button from './ui/Button';
-import { MDA } from '../types/supabase';
+import { MDA } from '../types/api';
 
 interface NewUserModalProps {
     isOpen: boolean;
@@ -18,8 +18,9 @@ const NewUserModal = ({ isOpen, onClose, mdas, onSuccess }: NewUserModalProps) =
     const [formData, setFormData] = useState({
         email: '',
         full_name: '',
-        role: 'user' as 'user' | 'approver' | 'super_user',
+        role: 'MDA_OFFICER' as 'MDA_OFFICER' | 'PPIMU_ADMIN' | 'WEBMASTER_ADMIN',
         mda_id: '',
+        password: '',
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -31,15 +32,16 @@ const NewUserModal = ({ isOpen, onClose, mdas, onSuccess }: NewUserModalProps) =
         e.preventDefault();
         setLoading(true);
         try {
-            await createUser(formData.email, formData.full_name, formData.role, formData.mda_id);
+            await createUser(formData.email, formData.full_name, formData.role, formData.mda_id, formData.password);
             onSuccess();
             onClose();
             // Reset
             setFormData({
                 email: '',
                 full_name: '',
-                role: 'user',
+                role: 'MDA_OFFICER',
                 mda_id: '',
+                password: '',
             });
         } catch (error) {
             console.error('Error creating user:', error);
@@ -77,6 +79,20 @@ const NewUserModal = ({ isOpen, onClose, mdas, onSuccess }: NewUserModalProps) =
                 </div>
 
                 <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input
+                        type="password"
+                        name="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        placeholder="Define initial password"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500 outline-none transition-shadow"
+                        required
+                        minLength={6}
+                    />
+                </div>
+
+                <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
                     <select
                         name="role"
@@ -84,9 +100,9 @@ const NewUserModal = ({ isOpen, onClose, mdas, onSuccess }: NewUserModalProps) =
                         onChange={handleChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500 outline-none transition-shadow"
                     >
-                        <option value="user">User (Engineer)</option>
-                        <option value="approver">Approver (Chairman)</option>
-                        <option value="super_user">Super User (Admin)</option>
+                        <option value="MDA_OFFICER">MDA Officer</option>
+                        <option value="PPIMU_ADMIN">PPIMU Admin</option>
+                        <option value="WEBMASTER_ADMIN">Webmaster Admin</option>
                     </select>
                 </div>
 

@@ -33,7 +33,7 @@ const DashboardLayout = () => {
                 <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
                     {/* Common Links can go here if any */}
 
-                    {profile?.role === 'user' && (
+                    {profile?.role === 'MDA_OFFICER' && (
                         <>
                             <NavLink to="/dashboard" className={linkClass}>
                                 <LayoutDashboard className="w-5 h-5 mr-3" />
@@ -46,9 +46,9 @@ const DashboardLayout = () => {
                         </>
                     )}
 
-                    {profile?.role === 'approver' && (
+                    {profile?.role === 'PPIMU_ADMIN' && (
                         <>
-                            <NavLink to="/approvals" className={linkClass}>
+                            <NavLink to="/ppimu" className={linkClass}>
                                 <FileText className="w-5 h-5 mr-3" />
                                 <span>Approvals</span>
                             </NavLink>
@@ -59,7 +59,7 @@ const DashboardLayout = () => {
                         </>
                     )}
 
-                    {profile?.role === 'super_user' && (
+                    {profile?.role === 'WEBMASTER_ADMIN' && (
                         <>
                             <NavLink to="/admin" className={linkClass}>
                                 <Settings className="w-5 h-5 mr-3" />
@@ -76,10 +76,10 @@ const DashboardLayout = () => {
                 <div className="p-4 border-t border-gray-100">
                     <div className="flex items-center mb-4 px-2">
                         <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-700 font-bold mr-3">
-                            {profile?.full_name?.charAt(0) || 'U'}
+                            {profile?.fullName?.charAt(0) || 'U'}
                         </div>
                         <div className="overflow-hidden">
-                            <p className="text-sm font-semibold text-gray-800 truncate">{profile?.full_name || 'User'}</p>
+                            <p className="text-sm font-semibold text-gray-800 truncate">{profile?.fullName || 'User'}</p>
                             <p className="text-xs text-gray-500 capitalize">{profile?.role?.replace('_', ' ') || 'Guest'}</p>
                         </div>
                     </div>

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import Modal from './ui/Modal';
-import { Project, ProgressUpdate } from '../types/supabase';
+import { Project, ProgressUpdate } from '../types/api';
 import { useProjectDetails } from '../hooks/useProjectDetails';
 import Button from './ui/Button';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { ISSUE_CATEGORIES, ISSUE_CATEGORY_OPTIONS } from '../constants/issueCategories';
 import { useAuth } from '../context/AuthContext';
 import UpdateModal from './UpdateModal';
@@ -19,7 +19,7 @@ interface ProjectDetailsModalProps {
 
 const ProjectDetailsModal = ({ isOpen, onClose, project, isApproverView, onProgressUpdate }: ProjectDetailsModalProps) => {
     const { updates, issues, loading, refetch } = useProjectDetails(project.project_id);
-    const { approveReport, requestChanges } = useReports();
+    const { approveReport, rejectReport } = useReports();
     const { user } = useAuth();
     const [activeTab, setActiveTab] = useState<'overview' | 'history' | 'issues'>('overview');
 
@@ -45,7 +45,7 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, isApproverView, onProgr
 
         setIsSubmittingIssue(true);
         try {
-            const { error } = await (supabase.from('issues') as any).insert({
+            await api.post('/issues', {
                 project_id: project.project_id,
                 log_date: new Date().toISOString(),
                 issue_category: issueCategory,
@@ -56,7 +56,6 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, isApproverView, onProgr
                 notes: issueNotes,
             });
 
-            if (error) throw error;
             setIsAddingIssue(false);
             setIssueCategory('');
             setIssueItem('');
@@ -70,7 +69,7 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, isApproverView, onProgr
     };
 
     const handleApprove = async (reportId: string) => {
-        if (!confirm('Are you sure you want to approve this report?')) return;
+        if (!confirm('Are you sure you want to approve this progress update?')) return;
         setActionLoading(reportId);
         try {
             await approveReport(reportId);
@@ -84,17 +83,16 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, isApproverView, onProgr
         }
     };
 
-    const handleRequestChanges = async (reportId: string) => {
-        const reason = prompt('Please provide a reason or instruction for the requested changes:');
-        if (reason === null) return;
+    const handleReject = async (reportId: string) => {
+        if (!confirm('Are you sure you want to request changes for this progress update?')) return;
         setActionLoading(reportId);
         try {
-            await requestChanges(reportId);
+            await rejectReport(reportId);
             refetch();
             if (onProgressUpdate) onProgressUpdate();
         } catch (error) {
-            console.error('Request changes failed:', error);
-            alert('Failed to return report.');
+            console.error('Rejection failed:', error);
+            alert('Failed to request changes.');
         } finally {
             setActionLoading(null);
         }
@@ -196,41 +194,6 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, isApproverView, onProgr
                                 >
                                     Edit & Resubmit
                                 </Button>
-                            )}
-
-                            {/* Approver Actions */}
-                            {isApproverView && update.milestone_status === 'Ready for Approval' && (
-                                <div className="flex flex-col gap-2 opacity-0 lg:opacity-100 group-hover:opacity-100 transition-opacity">
-                                    <div className="flex gap-2">
-                                        <Button
-                                            size="sm"
-                                            variant="primary"
-                                            isLoading={actionLoading === update.id}
-                                            onClick={() => handleApprove(update.id)}
-                                        >
-                                            Approve
-                                        </Button>
-                                        <Button
-                                            size="sm"
-                                            variant="outline"
-                                            className="!text-red-600 !border-red-200 hover:!bg-red-50"
-                                            isLoading={actionLoading === update.id}
-                                            onClick={() => handleRequestChanges(update.id)}
-                                        >
-                                            Return
-                                        </Button>
-                                    </div>
-                                    <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => {
-                                            setUpdateToEdit(update);
-                                            setIsUpdateModalOpen(true);
-                                        }}
-                                    >
-                                        Edit Update Before Approving
-                                    </Button>
-                                </div>
                             )}
                         </div>
                     </div>
@@ -360,6 +323,34 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, isApproverView, onProgr
                                 }}>
                                     Add Progress Update
                                 </Button>
+                            )}
+
+                            {isApproverView && latestUpdate && latestUpdate.milestone_status !== 'Approved' && (
+                                <div className="flex gap-2">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => {
+                                            setUpdateToEdit(latestUpdate);
+                                            setIsUpdateModalOpen(true);
+                                        }}
+                                    >
+                                        Edit
+                                    </Button>
+                                    <Button
+                                        variant="danger"
+                                        isLoading={actionLoading === latestUpdate.id}
+                                        onClick={() => handleReject(latestUpdate.id)}
+                                    >
+                                        Request Changes
+                                    </Button>
+                                    <Button
+                                        variant="primary"
+                                        isLoading={actionLoading === latestUpdate.id}
+                                        onClick={() => handleApprove(latestUpdate.id)}
+                                    >
+                                        Approve
+                                    </Button>
+                                </div>
                             )}
                         </div>
                     </>

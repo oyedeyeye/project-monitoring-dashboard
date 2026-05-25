@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
-import { ProgressUpdate, Issue } from '../types/supabase';
+import { api } from '../lib/api';
+import { ProgressUpdate, Issue } from '../types/api';
 
 export const useProjectDetails = (projectId: string | null) => {
     const [updates, setUpdates] = useState<ProgressUpdate[]>([]);
@@ -14,22 +14,11 @@ export const useProjectDetails = (projectId: string | null) => {
         setError(null);
         try {
             const [updatesRes, issuesRes] = await Promise.all([
-                supabase
-                    .from('progress_updates')
-                    .select('*')
-                    .eq('project_id', projectId)
-                    .order('report_date', { ascending: false }),
-                supabase
-                    .from('issues')
-                    .select('*')
-                    .eq('project_id', projectId)
-                    .order('log_date', { ascending: false })
+                api.get(`/progress-updates?projectId=${projectId}&limit=10`),
+                api.get(`/issues?projectId=${projectId}`)
             ]);
 
-            if (updatesRes.error) throw updatesRes.error;
-            if (issuesRes.error) throw issuesRes.error;
-
-            setUpdates(updatesRes.data || []);
+            setUpdates(updatesRes.data.data || []);
             setIssues(issuesRes.data || []);
         } catch (err: any) {
             console.error('Error fetching project details:', err);

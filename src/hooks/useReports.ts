@@ -1,86 +1,86 @@
-
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { ProgressUpdate } from '../types/supabase';
+import { api } from '../lib/api';
+import { ProgressUpdate } from '../types/api';
 import { useAuth } from '../context/AuthContext';
 
-export const useReports = () => {
+export const useReports = (initialPage = 1, initialLimit = 25) => {
     const { profile } = useAuth();
     const [reports, setReports] = useState<ProgressUpdate[]>([]);
+    const [meta, setMeta] = useState<{ total: number; page: number; limit: number; totalPages: number } | null>(null);
+    const [page, setPage] = useState(initialPage);
+    const [limit, setLimit] = useState(initialLimit);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const isWebmaster = profile?.role === 'WEBMASTER_ADMIN';
+    const isPpimu = profile?.role === 'PPIMU_ADMIN';
+
     useEffect(() => {
-        if (profile?.mda_id) {
-            fetchReports(profile.mda_id);
+        if (profile?.mdaId || isWebmaster || isPpimu) {
+            fetchReports();
         } else {
             setLoading(false);
         }
-    }, [profile]);
+    }, [profile, isWebmaster, isPpimu, page, limit]);
 
-    const fetchReports = async (mdaId: string) => {
-        console.log('useReports: Fetching reports for MDA:', mdaId);
+    const fetchReports = async () => {
+        console.log('useReports: Fetching reports...');
         try {
             setLoading(true);
-            // Verify join query syntax with Supabase documentation if needed. 
-            // Assuming we want reports for projects belonging to this MDA.
-            const { data, error } = await supabase
-                .from('progress_updates')
-                .select(`
-                    *,
-                    projects!inner(mda_id, title)
-                `)
-                .eq('projects.mda_id', mdaId)
-                .order('report_date', { ascending: false });
 
-            if (error) {
-                console.error('useReports: Error fetching reports:', error);
-                throw error;
-            }
+            // Nest API handles scoping based on JWT
+            const { data } = await api.get(`/progress-updates?page=${page}&limit=${limit}`);
 
-            console.log(`useReports: Successfully fetched ${data?.length || 0} reports.`);
-            setReports(data || []);
+            console.log(`useReports: Successfully fetched ${data?.data?.length || 0} reports.`);
+            setReports(data?.data || []);
+            setMeta(data?.meta || null);
         } catch (err: any) {
-            setError(err.message);
+            console.error('useReports: Error fetching reports:', err);
+            setError(err.response?.data?.message || err.message);
         } finally {
             setLoading(false);
         }
     };
 
     const approveReport = async (reportId: string) => {
+        if (!isPpimu && !isWebmaster) {
+            alert('Permission denied. Only PPIMU Administrators and Webmasters can approve reports.');
+            return;
+        }
         try {
-            // Logic for approval - currently updating milestone_status as placeholder
-            const { error } = await (supabase
-                .from('progress_updates') as any)
-                .update({ milestone_status: 'Approved' })
-                .eq('id', reportId);
-
-            if (error) throw error;
-
-            // Refresh list
-            if (profile?.mda_id) fetchReports(profile.mda_id);
-
+            await api.put(`/progress-updates/${reportId}/approve`);
+            fetchReports();
         } catch (err: any) {
-            setError(err.message);
+            setError(err.response?.data?.message || err.message);
             throw err;
         }
     };
 
-    const requestChanges = async (reportId: string) => {
+    const rejectReport = async (reportId: string) => {
+        if (!isPpimu && !isWebmaster) {
+            alert('Permission denied. Only PPIMU Administrators and Webmasters can reject reports.');
+            return;
+        }
         try {
-            const { error } = await (supabase
-                .from('progress_updates') as any)
-                .update({ milestone_status: 'Changes Required' })
-                .eq('id', reportId);
-
-            if (error) throw error;
-
-            if (profile?.mda_id) fetchReports(profile.mda_id);
+            await api.put(`/progress-updates/${reportId}/reject`);
+            fetchReports();
         } catch (err: any) {
-            setError(err.message);
+            setError(err.response?.data?.message || err.message);
             throw err;
         }
     };
 
-    return { reports, loading, error, approveReport, requestChanges, refetch: () => profile?.mda_id && fetchReports(profile.mda_id) };
+    return { 
+        reports, 
+        meta, 
+        page, 
+        setPage, 
+        limit, 
+        setLimit, 
+        loading, 
+        error, 
+        approveReport, 
+        rejectReport, 
+        refetch: () => fetchReports() 
+    };
 };

@@ -37,10 +37,12 @@ export interface ProgressUpdate {
 }
 
 export interface UserProfile {
-    id: string; // uuid, references auth.users
-    mda_id: string | null; // uuid
-    full_name: string;
-    role: 'super_user' | 'approver' | 'user' | null;
+    id: string; // uuid
+    mdaId: string | null; // uuid
+    mda_id?: string | null;
+    fullName: string;
+    full_name?: string;
+    role: 'WEBMASTER_ADMIN' | 'PPIMU_ADMIN' | 'MDA_OFFICER' | null;
 }
 
 export interface FinanceRecord {

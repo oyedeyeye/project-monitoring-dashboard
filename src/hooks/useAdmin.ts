@@ -1,7 +1,6 @@
-
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { UserProfile, MDA } from '../types/supabase';
+import { api } from '../lib/api';
+import { UserProfile, MDA } from '../types/api';
 
 export const useAdmin = () => {
     const [users, setUsers] = useState<UserProfile[]>([]);
@@ -18,64 +17,34 @@ export const useAdmin = () => {
         setLoading(true);
         try {
             const [usersRes, mdasRes] = await Promise.all([
-                supabase.from('profiles').select('*'),
-                supabase.from('mdas').select('*')
+                api.get('/users?limit=1000'),
+                api.get('/mdas')
             ]);
 
-            if (usersRes.error) {
-                console.error('useAdmin: Error fetching users:', usersRes.error);
-                throw usersRes.error;
-            }
-            if (mdasRes.error) {
-                console.error('useAdmin: Error fetching MDAs:', mdasRes.error);
-                throw mdasRes.error;
-            }
+            const usersList = usersRes.data?.data || (Array.isArray(usersRes.data) ? usersRes.data : []);
+            console.log(`useAdmin: Fetched ${usersList.length} users and ${mdasRes.data?.length || 0} MDAs.`);
 
-            console.log(`useAdmin: Fetched ${usersRes.data?.length || 0} users and ${mdasRes.data?.length || 0} MDAs.`);
-            setUsers(usersRes.data || []);
+            setUsers(usersList);
             setMDAs(mdasRes.data || []);
         } catch (err: any) {
-            setError(err.message);
+            console.error('useAdmin: Error fetching admin data:', err);
+            setError(err.response?.data?.message || err.message);
         } finally {
             setLoading(false);
         }
     };
 
-    const createUser = async (email: string, fullName: string, role: 'super_user' | 'approver' | 'user', mdaId: string) => {
-        // Note: Creating a user usually requires service_role key or an admin function if configured strictly. 
-        // For client-side creation, we might be limited. 
-        // However, standard flow is SignUp.
-        // But signUp creates a session for that user. Admin creating user usually implies secondary API or Edge Function.
-        // For now, let's assume direct insert to Profiles is what we manage, but Auth user creation is tricky without logging out admin.
-        // We will just implement profile creation or call a hypothetical edge function.
-        // As per Instructions: "supabase.auth.signUp() + INSERT into profiles"
-        // Warning: calling signUp will sign in the new user in client-side context unless autoSignIn is false.
+    const createUser = async (email: string, fullName: string, role: string, mdaId: string, password?: string) => {
+        console.log('useAdmin: Invoking backend to create user...', { email, role, mdaId, hasPassword: !!password });
 
-        const { data, error } = await supabase.auth.signUp({
-            email,
-            password: 'GenericPassword123!', // Required placeholder
-            options: {
-                data: { full_name: fullName, role, mda_id: mdaId } as any
-            }
-        });
-
-        if (error) throw error;
-
-        // If trigger doesn't exist, manually insert profile
-        if (data.user) {
-            const { error: profileError } = await (supabase.from('profiles') as any).insert({
-                id: data.user.id,
-                full_name: fullName,
-                role: role,
-                mda_id: mdaId
-            });
-
-            if (profileError) throw profileError;
+        try {
+            await api.post('/auth/register', { email, fullName, role, mdaId, password });
+            fetchData();
+        } catch (error: any) {
+            console.error('API Error creating user:', error);
+            throw error;
         }
-
-        fetchData();
     };
-
 
     return { users, mdas, loading, error, createUser, refetch: fetchData };
 };

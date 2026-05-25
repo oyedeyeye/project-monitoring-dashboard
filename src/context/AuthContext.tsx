@@ -1,106 +1,109 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Session, User } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
-import { UserProfile } from '../types/supabase';
+import { api } from '../lib/api';
+import { UserProfile } from '../types/api';
+
+interface User {
+    id: string;
+    email: string;
+}
 
 interface AuthContextType {
-    session: Session | null;
+    session: string | null; // JWT token
     user: User | null;
     profile: UserProfile | null;
     mdaName: string | null;
     loading: boolean;
     signOut: () => Promise<void>;
+    signIn: (data: any) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-    const [session, setSession] = useState<Session | null>(null);
+    const [session, setSession] = useState<string | null>(null);
     const [user, setUser] = useState<User | null>(null);
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [mdaName, setMdaName] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // fetch session on mount
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            console.log('AuthContext: Initial session check:', session ? 'Session found' : 'No session');
-            setSession(session);
-            setUser(session?.user ?? null);
-            if (session?.user) {
-                console.log('AuthContext: Fetching profile for user', session.user.id);
-                fetchProfile(session.user.id);
-            } else {
-                setLoading(false);
-            }
-        });
+        // Hydrate from localStorage
+        const token = localStorage.getItem('access_token');
+        const userDataString = localStorage.getItem('user_data');
 
-        // listen for auth changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-            console.log(`AuthContext: Auth event '${event}'`, session ? 'Session active' : 'No session');
-            setSession(session);
-            setUser(session?.user ?? null);
-            if (session?.user) {
-                setLoading(true);
-                fetchProfile(session.user.id);
-            } else {
-                setProfile(null);
-                setMdaName(null);
-                setLoading(false);
-            }
-        });
+        if (token && userDataString) {
+            try {
+                const userData = JSON.parse(userDataString);
+                setSession(token);
+                setUser({ id: userData.id, email: userData.email });
 
-        return () => subscription.unsubscribe();
-    }, []);
-
-    const fetchProfile = async (userId: string) => {
-        try {
-            const { data, error } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', userId)
-                .single();
-
-            const profileData = data as UserProfile | null;
-
-            if (error || !profileData) {
-                console.error('Error fetching profile:', error);
-            } else {
+                const profileData = userData.profile;
+                if (profileData) {
+                    profileData.mdaId = profileData.mdaId || profileData.mda_id;
+                    profileData.mda_id = profileData.mdaId;
+                    profileData.fullName = profileData.fullName || profileData.full_name;
+                    profileData.full_name = profileData.fullName;
+                }
                 setProfile(profileData);
 
-                // Fetch MDA name if mda_id exists
-                if (profileData.mda_id) {
-                    const { data: mdaRes, error: mdaError } = await supabase
-                        .from('mdas')
-                        .select('name')
-                        .eq('id', profileData.mda_id)
-                        .single();
-
-                    const mdaData = mdaRes as { name: string } | null;
-
-                    if (mdaError) {
-                        console.error('Error fetching MDA:', mdaError);
-                    } else if (mdaData) {
-                        setMdaName(mdaData.name);
-                    }
+                if (profileData?.mdaId) {
+                    fetchMda(profileData.mdaId);
                 } else {
-                    setMdaName(null);
+                    setLoading(false);
                 }
+            } catch (e) {
+                console.error("Failed to parse user data", e);
+                signOut();
             }
+        } else {
+            console.log('AuthContext: No session found');
+            setLoading(false);
+        }
+    }, []);
+
+    const fetchMda = async (mdaId: string) => {
+        try {
+            const { data } = await api.get(`/mdas/${mdaId}`);
+            setMdaName(data.name);
         } catch (error) {
-            console.error('Unexpected error fetching profile:', error);
+            console.error('Error fetching MDA:', error);
         } finally {
             setLoading(false);
         }
     };
 
+    const signIn = (authData: any) => {
+        const profileData = authData.user?.profile;
+        if (profileData) {
+            profileData.mdaId = profileData.mdaId || profileData.mda_id;
+            profileData.mda_id = profileData.mdaId;
+            profileData.fullName = profileData.fullName || profileData.full_name;
+            profileData.full_name = profileData.fullName;
+        }
+
+        localStorage.setItem('access_token', authData.access_token);
+        localStorage.setItem('user_data', JSON.stringify(authData.user));
+
+        setSession(authData.access_token);
+        setUser({ id: authData.user.id, email: authData.user.email });
+        setProfile(profileData);
+
+        if (profileData?.mdaId) {
+            fetchMda(profileData.mdaId);
+        } else {
+            setLoading(false);
+        }
+    }
+
     const signOut = async () => {
-        await supabase.auth.signOut();
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('user_data');
+
         setProfile(null);
         setMdaName(null);
         setSession(null);
         setUser(null);
+        setLoading(false);
     };
 
     const value = {
@@ -110,6 +113,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         mdaName,
         loading,
         signOut,
+        signIn,
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

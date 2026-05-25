@@ -1,0 +1,69 @@
+import axios from 'axios';
+
+// The baseUrl points to your NestJS backend. 
+// For local development it is typically http://localhost:3000
+export const api = axios.create({
+    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
+    headers: {
+        'Content-Type': 'application/json',
+    },
+});
+
+// Interceptor to attach the JWT token to every request
+api.interceptors.request.use(
+    (config) => {
+        const token = localStorage.getItem('access_token');
+        if (token && config.headers) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
+
+// Helper functions for key conversion
+function camelToSnake(str: string): string {
+    return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+}
+
+function convertKeysToSnakeCase(obj: any): any {
+    if (Array.isArray(obj)) {
+        return obj.map(convertKeysToSnakeCase);
+    } else if (obj !== null && typeof obj === 'object') {
+        if (obj instanceof Date) return obj;
+        const newObj: any = {};
+        for (const key in obj) {
+            if (Object.prototype.hasOwnProperty.call(obj, key)) {
+                let newKey = camelToSnake(key);
+                // Map NestJS Prisma singular 'project' relation to frontend expected plural 'projects'
+                if (newKey === 'project') {
+                    newKey = 'projects';
+                }
+                newObj[newKey] = convertKeysToSnakeCase(obj[key]);
+            }
+        }
+        return newObj;
+    }
+    return obj;
+}
+
+// Interceptor to handle 401 Unauthorized responses and convert response keys to snake_case
+api.interceptors.response.use(
+    (response) => {
+        if (response.data) {
+            response.data = convertKeysToSnakeCase(response.data);
+        }
+        return response;
+    },
+    (error) => {
+        if (error.response?.status === 401) {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('user_data');
+            // Redirect to login if necessary
+            window.location.href = '/';
+        }
+        return Promise.reject(error);
+    }
+);

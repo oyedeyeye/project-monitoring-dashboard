@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useReports } from '../hooks/useReports';
 import { useProjects } from '../hooks/useProjects';
 import Table from '../components/ui/Table';
@@ -7,8 +7,10 @@ import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import ProjectDetailsModal from '../components/ProjectDetailsModal';
-import { ProgressUpdate, Project } from '../types/supabase';
-import { Search } from 'lucide-react';
+import { ProgressUpdate, Project } from '../types/api';
+import { Search, CheckCircle, Bell } from 'lucide-react';
+import { useNotifications, AppNotification } from '../hooks/useNotifications';
+import { NotificationModal } from '../components/NotificationModal';
 
 import { useAuth } from '../context/AuthContext';
 
@@ -22,6 +24,24 @@ const ApproverDashboard = () => {
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
+    // Notifications state
+    const {
+        notifications,
+        unreadCount,
+        markAsRead,
+        markAllAsRead,
+        deleteNotification,
+        clearAll
+    } = useNotifications();
+    const [isNotifModalOpen, setIsNotifModalOpen] = useState(false);
+
+    // Auto refetch pending table on new submission events
+    useEffect(() => {
+        if (notifications.length > 0) {
+            refetch();
+        }
+    }, [notifications.length]);
+
     const handleRowClick = (updateOrProject: any) => {
         // Map the parameter to an adequate Project shape depending on whether it's an update with joined project or just a project
         const projectBase = updateOrProject.projects
@@ -29,6 +49,20 @@ const ApproverDashboard = () => {
             : updateOrProject;
 
         setSelectedProject(projectBase);
+        setIsModalOpen(true);
+    };
+
+    const handleNotificationClick = (notif: AppNotification) => {
+        markAsRead(notif.id);
+        setIsNotifModalOpen(false);
+
+        const projectBase = projects.find(p => p.project_id === notif.projectId) || {
+            project_id: notif.projectId,
+            title: notif.projectTitle,
+            approved_budget: 0,
+        };
+
+        setSelectedProject(projectBase as any);
         setIsModalOpen(true);
     };
 
@@ -65,7 +99,8 @@ const ApproverDashboard = () => {
                     variant="primary"
                     className="pointer-events-none" // Action happens on row click
                 >
-                    Review
+                    <CheckCircle className="w-4 h-4 mr-1" />
+                    Approve
                 </Button>
             )
         }
@@ -119,9 +154,23 @@ const ApproverDashboard = () => {
                     </h1>
                     <p className="text-gray-500 mt-1">Review and approve project progress reports.</p>
                 </div>
-                <Button onClick={() => refetch()} variant="ghost" size="sm">
-                    Refresh
-                </Button>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => setIsNotifModalOpen(true)}
+                        className="relative p-2 text-gray-500 hover:text-gray-700 bg-white rounded-lg border border-gray-200 transition-all hover:bg-gray-50"
+                        title="View Notifications"
+                    >
+                        <Bell className="w-5 h-5 text-orange-600" />
+                        {unreadCount > 0 && (
+                            <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-orange-600 text-[10px] font-bold text-white ring-2 ring-white animate-pulse">
+                                {unreadCount}
+                            </span>
+                        )}
+                    </button>
+                    <Button onClick={() => refetch()} variant="ghost" size="sm">
+                        Refresh
+                    </Button>
+                </div>
             </div>
 
             <div className="flex space-x-4 border-b border-gray-200">
@@ -130,8 +179,8 @@ const ApproverDashboard = () => {
                         key={tab}
                         onClick={() => setActiveTab(tab)}
                         className={`pb-2 px-1 text-sm font-medium capitalize ${activeTab === tab
-                                ? 'border-b-2 border-primary-600 text-primary-600'
-                                : 'text-gray-500 hover:text-gray-700'
+                            ? 'border-b-2 border-primary-600 text-primary-600'
+                            : 'text-gray-500 hover:text-gray-700'
                             }`}
                     >
                         {tab === 'pending' ? 'Pending Approvals' : tab === 'overview' ? 'Agency Overview' : 'Approval History'}
@@ -181,6 +230,17 @@ const ApproverDashboard = () => {
                     onProgressUpdate={() => refetch()}
                 />
             )}
+
+            <NotificationModal
+                isOpen={isNotifModalOpen}
+                onClose={() => setIsNotifModalOpen(false)}
+                notifications={notifications}
+                markAsRead={markAsRead}
+                markAllAsRead={markAllAsRead}
+                deleteNotification={deleteNotification}
+                clearAll={clearAll}
+                onNotificationClick={handleNotificationClick}
+            />
         </div>
     );
 };

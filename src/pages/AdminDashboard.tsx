@@ -1,25 +1,42 @@
-
 import { useState } from 'react';
 import { useAdmin } from '../hooks/useAdmin';
+import { useUsers } from '../hooks/useUsers';
 import { useProjects } from '../hooks/useProjects';
 import Table from '../components/ui/Table';
 import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import NewUserModal from '../components/NewUserModal';
-import { UserProfile, MDA, Project } from '../types/supabase';
+import EditUserModal from '../components/EditUserModal';
+import { UserProfile, MDA, Project } from '../types/api';
 import { UserPlus, ArrowLeft, Building2 } from 'lucide-react';
 
 import { useAuth } from '../context/AuthContext';
 
 const AdminDashboard = () => {
-    const { users, mdas, loading, error, refetch } = useAdmin();
-    const { mdaName } = useAuth();
+    const { users: allUsers, mdas, loading: adminLoading, error: adminError, refetch: refetchAdmin } = useAdmin();
+    const {
+        users: paginatedUsers,
+        meta: usersMeta,
+        page: usersPage,
+        setPage: setUsersPage,
+        limit: usersLimit,
+        setLimit: setUsersLimit,
+        loading: usersLoading,
+        error: usersError,
+        updateUser,
+        deleteUser,
+        refetch: refetchUsers
+    } = useUsers();
+
+    const { mdaName, profile } = useAuth();
 
     // UI State
     const [activeTab, setActiveTab] = useState<'mdas' | 'users'>('mdas');
     const [selectedMDA, setSelectedMDA] = useState<MDA | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [selectedEditUser, setSelectedEditUser] = useState<any | null>(null);
 
     // Projects fetch based on selected MDA
     const { projects, loading: projectsLoading } = useProjects(selectedMDA?.id);
@@ -29,40 +46,77 @@ const AdminDashboard = () => {
         return mdas.find(m => m.id === mdaId)?.name || 'Unknown';
     };
 
+    const handleDeleteUser = async (id: string) => {
+        if (window.confirm('Are you sure you want to delete this user account? This action is permanent.')) {
+            try {
+                await deleteUser(id);
+                refetchAdmin();
+            } catch (err: any) {
+                alert(err.response?.data?.message || 'Failed to delete user.');
+            }
+        }
+    };
+
     const userColumns = [
-        { header: 'Full Name', accessor: 'full_name' as keyof UserProfile },
+        { header: 'Full Name', accessor: 'fullName' as keyof UserProfile },
         {
             header: 'Role',
             accessor: (item: UserProfile) => (
-                <Badge variant={item.role === 'super_user' ? 'error' : item.role === 'approver' ? 'warning' : 'neutral'}>
+                <Badge variant={item.role === 'WEBMASTER_ADMIN' ? 'error' : item.role === 'PPIMU_ADMIN' ? 'warning' : 'neutral'}>
                     {item.role?.replace('_', ' ').toUpperCase()}
                 </Badge>
             )
         },
         {
             header: 'MDA',
-            accessor: (item: UserProfile) => getMDAName(item.mda_id)
+            accessor: (item: UserProfile) => getMDAName(item.mdaId)
+        },
+        {
+            header: 'Actions',
+            accessor: (item: UserProfile) => {
+                const canManage = profile?.role === 'WEBMASTER_ADMIN' || (profile?.role === 'PPIMU_ADMIN' && item.role === 'MDA_OFFICER');
+                if (!canManage) return <span className="text-gray-400 text-xs font-medium">ReadOnly</span>;
+                return (
+                    <div className="flex gap-3" onClick={(e) => e.stopPropagation()}>
+                        <button
+                            onClick={() => {
+                                setSelectedEditUser(item);
+                                setIsEditModalOpen(true);
+                            }}
+                            className="text-orange-600 hover:text-orange-800 font-semibold text-xs transition-colors"
+                        >
+                            Edit
+                        </button>
+                        <button
+                            onClick={() => handleDeleteUser(item.id)}
+                            className="text-red-600 hover:text-red-800 font-semibold text-xs transition-colors"
+                        >
+                            Delete
+                        </button>
+                    </div>
+                );
+            }
         }
     ];
 
     // --- MDA Columns ---
     const mdaColumns = [
         { header: 'MDA Name', accessor: 'name' as keyof MDA },
-        { header: 'Short Name', accessor: 'short_name' as keyof MDA },
+        { header: 'Short Name', accessor: 'code' as keyof MDA },
         {
             header: 'Staff Users',
-            accessor: (item: MDA) => users.filter(u => u.mda_id === item.id && u.role === 'user').length
+            accessor: (item: MDA) => allUsers.filter(u => u.mdaId === item.id && u.role === 'MDA_OFFICER').length
         },
         {
             header: 'Approvers',
-            accessor: (item: MDA) => users.filter(u => u.mda_id === item.id && u.role === 'approver').length
+            accessor: (item: MDA) => allUsers.filter(u => u.mdaId === item.id && u.role === 'PPIMU_ADMIN').length
         },
         {
             header: 'Action',
             accessor: (item: MDA) => (
                 <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setSelectedMDA(item); }}>
                     <Building2 className="w-4 h-4 mr-1" />
-                    View Projects
+                    View
                 </Button>
             )
         }
@@ -83,10 +137,15 @@ const AdminDashboard = () => {
         }
     ];
 
-    if (error) {
+    const handleRefresh = () => {
+        refetchAdmin();
+        refetchUsers();
+    };
+
+    if (adminError || usersError) {
         return (
             <div className="p-4 bg-red-50 text-red-600 rounded-lg">
-                Error loading admin data: {error}
+                Error loading admin data: {adminError || usersError}
             </div>
         );
     }
@@ -106,7 +165,7 @@ const AdminDashboard = () => {
                     <p className="text-gray-500 mt-1">Manage system users and configurations.</p>
                 </div>
                 <div className="flex gap-2">
-                    <Button onClick={() => refetch()} variant="ghost" size="sm">Refresh</Button>
+                    <Button onClick={handleRefresh} variant="ghost" size="sm">Refresh</Button>
                     <Button onClick={() => setIsModalOpen(true)}>
                         <UserPlus className="w-4 h-4 mr-2" />
                         Add New User
@@ -134,7 +193,7 @@ const AdminDashboard = () => {
                             data={projects}
                             columns={projectColumns}
                             isLoading={projectsLoading}
-                            emptyMessage={`No projects found for ${selectedMDA.short_name}.`}
+                            emptyMessage={`No projects found for ${selectedMDA.code || selectedMDA.name}.`}
                             keyExtractor={(item) => item.project_id}
                         />
                     </>
@@ -157,20 +216,89 @@ const AdminDashboard = () => {
                         </div>
 
                         {activeTab === 'users' && (
-                            <Table
-                                data={users}
-                                columns={userColumns}
-                                isLoading={loading}
-                                emptyMessage="No users found."
-                                keyExtractor={(item) => item.id}
-                            />
+                            <div className="flex flex-col">
+                                <Table
+                                    data={paginatedUsers}
+                                    columns={userColumns}
+                                    isLoading={usersLoading}
+                                    emptyMessage="No users found."
+                                    keyExtractor={(item) => item.id}
+                                />
+
+                                {/* Elegant System Users Pagination Controls */}
+                                {usersMeta && usersMeta.total_pages > 0 && (
+                                    <div className="flex flex-col sm:flex-row items-center justify-between p-4 gap-4 border-t border-gray-100 bg-gray-50 rounded-b-lg">
+                                        <div className="flex flex-wrap items-center gap-4">
+                                            <span className="text-sm text-gray-600">
+                                                Showing <span className="font-semibold">{(usersPage - 1) * usersLimit + 1}</span> to{' '}
+                                                <span className="font-semibold">{Math.min(usersPage * usersLimit, usersMeta.total)}</span> of{' '}
+                                                <span className="font-semibold">{usersMeta.total}</span> entries
+                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-sm text-gray-500">Rows per page:</span>
+                                                <select
+                                                    value={usersLimit}
+                                                    onChange={(e) => {
+                                                        setUsersLimit(Number(e.target.value));
+                                                        setUsersPage(1);
+                                                    }}
+                                                    className="bg-white border border-gray-300 text-gray-700 text-xs rounded-lg focus:ring-orange-500 focus:border-orange-500 p-1.5 shadow-sm transition-all"
+                                                >
+                                                    <option value={25}>25</option>
+                                                    <option value={30}>30</option>
+                                                    <option value={50}>50</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="flex items-center gap-1.5">
+                                            <button
+                                                onClick={() => setUsersPage(Math.max(1, usersPage - 1))}
+                                                disabled={usersPage === 1}
+                                                className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none transition-colors"
+                                            >
+                                                Previous
+                                            </button>
+                                            
+                                            {Array.from({ length: usersMeta.total_pages }, (_, i) => i + 1)
+                                                .filter((p) => Math.abs(p - usersPage) <= 2 || p === 1 || p === usersMeta.total_pages)
+                                                .map((p, idx, array) => {
+                                                    const showEllipsis = idx > 0 && p - array[idx - 1] > 1;
+                                                    return (
+                                                        <div key={p} className="flex items-center gap-1.5">
+                                                            {showEllipsis && <span className="px-1 text-gray-400">...</span>}
+                                                            <button
+                                                                onClick={() => setUsersPage(p)}
+                                                                className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+                                                                    usersPage === p
+                                                                        ? 'bg-orange-600 border-orange-600 text-white shadow-sm'
+                                                                        : 'border-gray-200 text-gray-700 bg-white hover:bg-gray-50'
+                                                                }`}
+                                                            >
+                                                                {p}
+                                                            </button>
+                                                        </div>
+                                                    );
+                                                })}
+
+                                            <button
+                                                onClick={() => setUsersPage(Math.min(usersMeta.total_pages, usersPage + 1))}
+                                                disabled={usersPage === usersMeta.total_pages}
+                                                className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none transition-colors"
+                                            >
+                                                Next
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         )}
 
                         {activeTab === 'mdas' && (
                             <Table
                                 data={mdas}
                                 columns={mdaColumns}
-                                isLoading={loading}
+                                isLoading={adminLoading}
                                 emptyMessage="No MDAs found."
                                 keyExtractor={(item) => item.id}
                                 onRowClick={(item: MDA) => setSelectedMDA(item)}
@@ -184,7 +312,20 @@ const AdminDashboard = () => {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 mdas={mdas}
-                onSuccess={() => refetch()}
+                onSuccess={handleRefresh}
+            />
+
+            <EditUserModal
+                isOpen={isEditModalOpen}
+                onClose={() => {
+                    setIsEditModalOpen(false);
+                    setSelectedEditUser(null);
+                }}
+                user={selectedEditUser}
+                mdas={mdas}
+                onSuccess={handleRefresh}
+                onUpdate={updateUser}
+                currentUserRole={profile?.role}
             />
         </div>
     );

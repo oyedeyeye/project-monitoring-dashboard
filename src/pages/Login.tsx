@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { api } from '../lib/api';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -8,6 +9,7 @@ const Login = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
+    const { signIn } = useAuth();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -16,47 +18,29 @@ const Login = () => {
         console.log('Login: Attempting login for', email);
 
         try {
-            const { data: { session }, error: authError } = await supabase.auth.signInWithPassword({
+            const { data } = await api.post('/auth/login', {
                 email,
                 password,
             });
 
-            if (authError) {
-                console.error('Login: Auth error:', authError.message);
-                throw authError;
-            }
-
             console.log('Login: Auth successful, session established.');
 
-            if (session?.user) {
-                // Fetch profile to know where to redirect
-                const { data: profileData, error: profileError } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', session.user.id)
-                    .single();
+            // Hydrate context
+            signIn(data);
 
-                if (profileError) {
-                    console.error('Login: Error fetching profile:', profileError);
-                } else {
-                    console.log('Login: Profile fetched:', profileData);
-                }
+            const userRole = data.user?.profile?.role;
+            console.log('Login: Redirecting based on role:', userRole);
 
-                // Explicitly cast or handle the type if inference fails
-                const userRole = (profileData as any)?.role;
-                console.log('Login: Redirecting based on role:', userRole);
-
-                if (userRole === 'super_user') {
-                    navigate('/admin');
-                } else if (userRole === 'approver') {
-                    navigate('/approvals');
-                } else {
-                    navigate('/dashboard'); // Default for 'user' or null
-                }
+            if (userRole === 'WEBMASTER_ADMIN') {
+                navigate('/admin');
+            } else if (userRole === 'PPIMU_ADMIN') {
+                navigate('/ppimu');
+            } else {
+                navigate('/dashboard'); // Default for 'MDA_OFFICER'
             }
         } catch (err: any) {
             console.error('Login: Caught error during login process:', err);
-            setError(err.message || 'An unexpected error occurred');
+            setError(err.response?.data?.message || err.message || 'An unexpected error occurred');
         } finally {
             setLoading(false);
         }
@@ -113,9 +97,9 @@ const Login = () => {
                             />
                         </div>
 
-                        <a href="#" className="block text-right text-[#bf6020] text-[0.85rem] no-underline mt-[-5px] mb-[25px] hover:underline">
+                        <Link to="/forgot-password" className="block text-right text-[#bf6020] text-[0.85rem] no-underline mt-[-5px] mb-[25px] hover:underline">
                             Forgot password?
-                        </a>
+                        </Link>
 
                         <button
                             type="submit"

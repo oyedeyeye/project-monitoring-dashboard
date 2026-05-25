@@ -1,11 +1,9 @@
-
 import { useState } from 'react';
-
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import Modal from './ui/Modal';
 import Button from './ui/Button';
 
-import { ProgressUpdate } from '../types/supabase';
+import { ProgressUpdate } from '../types/api';
 
 interface UpdateModalProps {
     isOpen: boolean;
@@ -27,6 +25,8 @@ const UpdateModal = ({ isOpen, onClose, projectId, projectTitle, existingUpdate,
         evidence_link: existingUpdate?.evidence_link || '',
     });
 
+    const [actionType, setActionType] = useState<'DRAFT' | 'SUBMITTED'>('SUBMITTED');
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -39,25 +39,21 @@ const UpdateModal = ({ isOpen, onClose, projectId, projectTitle, existingUpdate,
         setLoading(true);
         try {
             const payload = {
-                project_id: projectId,
-                report_date: formData.report_date,
-                physical_progress_pct: Number(formData.physical_progress_pct),
+                projectId: projectId,
+                reportDate: new Date(formData.report_date).toISOString(),
+                physicalProgressPct: Number(formData.physical_progress_pct),
                 stage: formData.stage,
-                milestone_status: 'Ready for Approval',
-                key_update: formData.key_update,
-                evidence_link: formData.evidence_link || null,
+                milestoneStatus: actionType === 'SUBMITTED' ? 'Ready for Approval' : 'Draft',
+                status: actionType,
+                keyUpdate: formData.key_update,
+                evidenceLink: formData.evidence_link || null,
             };
 
-            let error;
             if (existingUpdate) {
-                const res = await (supabase.from('progress_updates') as any).update(payload).eq('id', existingUpdate.id);
-                error = res.error;
+                await api.put(`/progress-updates/${existingUpdate.id}`, payload);
             } else {
-                const res = await (supabase.from('progress_updates') as any).insert([payload]);
-                error = res.error;
+                await api.post('/progress-updates', payload);
             }
-
-            if (error) throw error;
 
             onSuccess();
             onClose();
@@ -149,9 +145,14 @@ const UpdateModal = ({ isOpen, onClose, projectId, projectTitle, existingUpdate,
                     />
                 </div>
 
-                <div className="flex justify-end pt-4">
-                    <Button type="button" variant="ghost" onClick={onClose} className="mr-2">Cancel</Button>
-                    <Button type="submit" isLoading={loading}>Submit Update</Button>
+                <div className="flex justify-end pt-4 gap-2">
+                    <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
+                    <Button type="submit" variant="outline" onClick={() => setActionType('DRAFT')} isLoading={loading && actionType === 'DRAFT'}>
+                        Save Draft
+                    </Button>
+                    <Button type="submit" variant="primary" onClick={() => setActionType('SUBMITTED')} isLoading={loading && actionType === 'SUBMITTED'}>
+                        Submit Update
+                    </Button>
                 </div>
             </form>
         </Modal>
