@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useReports } from '../hooks/useReports';
 import { useProjects } from '../hooks/useProjects';
 import Table from '../components/ui/Table';
@@ -9,8 +9,6 @@ import Card from '../components/ui/Card';
 import ProjectDetailsModal from '../components/ProjectDetailsModal';
 import { ProgressUpdate, Project } from '../types/api';
 import { Search, CheckCircle, Bell } from 'lucide-react';
-import { useNotifications, AppNotification } from '../hooks/useNotifications';
-import { NotificationModal } from '../components/NotificationModal';
 
 import { useAuth } from '../context/AuthContext';
 
@@ -25,23 +23,7 @@ const ApproverDashboard = () => {
     const [selectedUpdate, setSelectedUpdate] = useState<ProgressUpdate | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    // Notifications state
-    const {
-        notifications,
-        unreadCount,
-        markAsRead,
-        markAllAsRead,
-        deleteNotification,
-        clearAll
-    } = useNotifications();
-    const [isNotifModalOpen, setIsNotifModalOpen] = useState(false);
 
-    // Auto refetch pending table on new submission events
-    useEffect(() => {
-        if (notifications.length > 0) {
-            refetch();
-        }
-    }, [notifications.length]);
 
     const handleRowClick = (updateOrProject: any) => {
         // Map the parameter to an adequate Project shape depending on whether it's an update with joined project or just a project
@@ -61,29 +43,16 @@ const ApproverDashboard = () => {
         setIsModalOpen(true);
     };
 
-    const handleNotificationClick = (notif: AppNotification) => {
-        markAsRead(notif.id);
-        setIsNotifModalOpen(false);
 
-        const projectBase = projects.find(p => p.project_id === notif.projectId) || {
-            project_id: notif.projectId,
-            title: notif.projectTitle,
-            approved_budget: 0,
-        };
-
-        // Attempt to find the specific pending update related to this notification
-        const specificUpdate = reports.find(r => r.id === notif.id);
-        setSelectedUpdate(specificUpdate || null);
-
-        setSelectedProject(projectBase as any);
-        setIsModalOpen(true);
-    };
 
     const pendingReports = reports.filter(r => r.milestone_status !== 'Approved');
     const approvedReports = reports.filter(r => r.milestone_status === 'Approved');
 
     const pendingColumns = [
-        { header: 'Date', accessor: 'report_date' as keyof ProgressUpdate },
+        { 
+            header: 'Date', 
+            accessor: (item: ProgressUpdate) => new Date(item.report_date).toLocaleDateString() 
+        },
         {
             header: 'Project',
             accessor: (item: ProgressUpdate) => (item as any).projects?.title || 'Unknown Project'
@@ -169,14 +138,14 @@ const ApproverDashboard = () => {
                 </div>
                 <div className="flex items-center gap-3">
                     <button
-                        onClick={() => setIsNotifModalOpen(true)}
+                        onClick={() => setActiveTab('pending')}
                         className="relative p-2 text-gray-500 hover:text-gray-700 bg-white rounded-lg border border-gray-200 transition-all hover:bg-gray-50"
-                        title="View Notifications"
+                        title="View Pending Approvals"
                     >
                         <Bell className="w-5 h-5 text-orange-600" />
-                        {unreadCount > 0 && (
+                        {pendingReports.length > 0 && (
                             <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-orange-600 text-[10px] font-bold text-white ring-2 ring-white animate-pulse">
-                                {unreadCount}
+                                {pendingReports.length}
                             </span>
                         )}
                     </button>
@@ -248,16 +217,7 @@ const ApproverDashboard = () => {
                 />
             )}
 
-            <NotificationModal
-                isOpen={isNotifModalOpen}
-                onClose={() => setIsNotifModalOpen(false)}
-                notifications={notifications}
-                markAsRead={markAsRead}
-                markAllAsRead={markAllAsRead}
-                deleteNotification={deleteNotification}
-                clearAll={clearAll}
-                onNotificationClick={handleNotificationClick}
-            />
+
         </div>
     );
 };

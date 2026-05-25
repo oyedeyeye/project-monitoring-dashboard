@@ -355,6 +355,7 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isAppro
                                 <div className="flex gap-2">
                                     <Button
                                         variant="outline"
+                                        disabled={!!actionLoading}
                                         onClick={() => {
                                             setUpdateToEdit(latestUpdate);
                                             setIsUpdateModalOpen(true);
@@ -364,6 +365,7 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isAppro
                                     </Button>
                                     <Button
                                         variant="danger"
+                                        disabled={!!actionLoading}
                                         isLoading={actionLoading === latestUpdate.id}
                                         onClick={() => handleReject(latestUpdate.id)}
                                     >
@@ -371,6 +373,7 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isAppro
                                     </Button>
                                     <Button
                                         variant="primary"
+                                        disabled={!!actionLoading}
                                         isLoading={actionLoading === latestUpdate.id}
                                         onClick={() => handleApprove(latestUpdate.id)}
                                     >
