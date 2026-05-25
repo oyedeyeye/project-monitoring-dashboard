@@ -13,11 +13,12 @@ interface ProjectDetailsModalProps {
     isOpen: boolean;
     onClose: () => void;
     project: Project;
+    selectedUpdate?: ProgressUpdate | null;
     isApproverView?: boolean;
     onProgressUpdate?: () => void;
 }
 
-const ProjectDetailsModal = ({ isOpen, onClose, project, isApproverView, onProgressUpdate }: ProjectDetailsModalProps) => {
+const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isApproverView, onProgressUpdate }: ProjectDetailsModalProps) => {
     const { updates, issues, loading, refetch } = useProjectDetails(project.project_id);
     const { approveReport, rejectReport } = useReports();
     const { user } = useAuth();
@@ -98,7 +99,7 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, isApproverView, onProgr
         }
     };
 
-    const latestUpdate = updates.length > 0 ? updates[0] : null;
+    const latestUpdate = selectedUpdate || (updates.length > 0 ? updates[0] : null);
 
     const renderTabs = () => (
         <div className="flex space-x-4 border-b border-gray-200 mb-6">
@@ -139,6 +140,31 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, isApproverView, onProgr
                     </p>
                 </div>
             </div>
+
+            {latestUpdate && (
+                <div className="mt-4 border-t pt-4">
+                    <h4 className="font-medium text-gray-800 mb-2">Update Notes (Submitted by Officer)</h4>
+                    <div className="bg-orange-50/50 border border-orange-100 p-4 rounded-lg space-y-3">
+                        <div>
+                            <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">Key Progress Update</p>
+                            <p className="text-sm text-gray-700 mt-1 whitespace-pre-wrap">{latestUpdate.key_update || 'No update notes provided.'}</p>
+                        </div>
+                        {latestUpdate.evidence_link && (
+                            <div className="pt-2 border-t border-orange-100">
+                                <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">Evidence / Attachment Link</p>
+                                <a 
+                                    href={latestUpdate.evidence_link} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="text-sm text-primary-600 hover:underline mt-1 inline-block"
+                                >
+                                    {latestUpdate.evidence_link}
+                                </a>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
 
             <div className="mt-4 border-t pt-4">
                 <h4 className="font-medium text-gray-800 mb-2">Project Info</h4>

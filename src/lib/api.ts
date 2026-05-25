@@ -44,6 +44,10 @@ function convertKeysToSnakeCase(obj: any): any {
                 newObj[newKey] = convertKeysToSnakeCase(obj[key]);
             }
         }
+        // If the object has an 'id' but no 'project_id', populate 'project_id' to avoid frontend-backend key mismatches
+        if (newObj.id && !newObj.project_id) {
+            newObj.project_id = newObj.id;
+        }
         return newObj;
     }
     return obj;

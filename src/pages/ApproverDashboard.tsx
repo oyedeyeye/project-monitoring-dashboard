@@ -22,6 +22,7 @@ const ApproverDashboard = () => {
     const [activeTab, setActiveTab] = useState<'pending' | 'overview' | 'history'>('pending');
 
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+    const [selectedUpdate, setSelectedUpdate] = useState<ProgressUpdate | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     // Notifications state
@@ -49,6 +50,14 @@ const ApproverDashboard = () => {
             : updateOrProject;
 
         setSelectedProject(projectBase);
+        
+        // If the row clicked represents a progress update (e.g. pending approvals), preserve it
+        if (updateOrProject.milestone_status) {
+            setSelectedUpdate(updateOrProject);
+        } else {
+            setSelectedUpdate(null);
+        }
+        
         setIsModalOpen(true);
     };
 
@@ -61,6 +70,10 @@ const ApproverDashboard = () => {
             title: notif.projectTitle,
             approved_budget: 0,
         };
+
+        // Attempt to find the specific pending update related to this notification
+        const specificUpdate = reports.find(r => r.id === notif.id);
+        setSelectedUpdate(specificUpdate || null);
 
         setSelectedProject(projectBase as any);
         setIsModalOpen(true);
@@ -224,8 +237,12 @@ const ApproverDashboard = () => {
             {selectedProject && isModalOpen && (
                 <ProjectDetailsModal
                     isOpen={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
+                    onClose={() => {
+                        setIsModalOpen(false);
+                        setSelectedUpdate(null);
+                    }}
                     project={selectedProject as Project}
+                    selectedUpdate={selectedUpdate}
                     isApproverView={true}
                     onProgressUpdate={() => refetch()}
                 />
