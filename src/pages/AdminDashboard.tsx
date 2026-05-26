@@ -105,7 +105,7 @@ const AdminDashboard = () => {
         { header: 'Short Name', accessor: 'code' as keyof MDA },
         {
             header: 'Staff Users',
-            accessor: (item: MDA) => allUsers.filter(u => {
+            accessor: (item: MDA) => allUsers.filter((u: any) => {
                 const uMdaId = u.profile?.mda_id || u.profile?.mdaId || u.mda_id;
                 const uRole = u.profile?.role || u.role;
                 return uMdaId === item.id && uRole === 'MDA_OFFICER';

@@ -1,7 +1,7 @@
 
 import { Outlet, useNavigate, NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, LayoutDashboard, FileText, Settings, Database, Users } from 'lucide-react';
+import { LogOut, LayoutDashboard } from 'lucide-react';
 import clsx from 'clsx';
 
 const DashboardLayout = () => {

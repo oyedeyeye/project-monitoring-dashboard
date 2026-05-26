@@ -20,7 +20,7 @@ interface ProjectDetailsModalProps {
 
 const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isApproverView, onProgressUpdate }: ProjectDetailsModalProps) => {
     const { updates, issues, loading, refetch } = useProjectDetails(project.project_id);
-    const { approveReport, rejectReport } = useReports();
+    const { approveReport } = useReports();
     const { user } = useAuth();
     const [activeTab, setActiveTab] = useState<'overview' | 'history' | 'issues'>('overview');
 
@@ -82,21 +82,6 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isAppro
         } catch (error) {
             console.error('Approval failed:', error);
             alert('Failed to approve report.');
-        } finally {
-            setActionLoading(null);
-        }
-    };
-
-    const handleReject = async (reportId: string) => {
-        if (!confirm('Are you sure you want to request changes for this progress update?')) return;
-        setActionLoading(reportId);
-        try {
-            await rejectReport(reportId);
-            refetch();
-            if (onProgressUpdate) onProgressUpdate();
-        } catch (error) {
-            console.error('Rejection failed:', error);
-            alert('Failed to request changes.');
         } finally {
             setActionLoading(null);
         }
