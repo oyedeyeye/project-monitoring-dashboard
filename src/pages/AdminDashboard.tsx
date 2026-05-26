@@ -105,11 +105,11 @@ const AdminDashboard = () => {
         { header: 'Short Name', accessor: 'code' as keyof MDA },
         {
             header: 'Staff Users',
-            accessor: (item: MDA) => allUsers.filter(u => u.mdaId === item.id && u.role === 'MDA_OFFICER').length
-        },
-        {
-            header: 'Approvers',
-            accessor: (item: MDA) => allUsers.filter(u => u.mdaId === item.id && u.role === 'PPIMU_ADMIN').length
+            accessor: (item: MDA) => allUsers.filter(u => {
+                const uMdaId = u.profile?.mda_id || u.profile?.mdaId || u.mda_id;
+                const uRole = u.profile?.role || u.role;
+                return uMdaId === item.id && uRole === 'MDA_OFFICER';
+            }).length
         },
         {
             header: 'Action',

@@ -88,6 +88,46 @@ const ApproverDashboard = () => {
         }
     ];
 
+    const approvedColumns = [
+        { 
+            header: 'Date', 
+            accessor: (item: ProgressUpdate) => new Date(item.report_date).toLocaleDateString() 
+        },
+        {
+            header: 'Project',
+            accessor: (item: ProgressUpdate) => (item as any).projects?.title || 'Unknown Project'
+        },
+        {
+            header: 'Progress',
+            accessor: (item: ProgressUpdate) => `${item.physical_progress_pct}%`
+        },
+        {
+            header: 'Stage',
+            accessor: (item: ProgressUpdate) => <Badge variant="info">{item.stage}</Badge>
+        },
+        {
+            header: 'Status',
+            accessor: (item: ProgressUpdate) => (
+                <Badge variant="success">
+                    {item.milestone_status}
+                </Badge>
+            )
+        },
+        {
+            header: 'Action',
+            accessor: () => (
+                <Button
+                    size="sm"
+                    variant="outline"
+                    className="pointer-events-none"
+                >
+                    <Search className="w-4 h-4 mr-1" />
+                    Details
+                </Button>
+            )
+        }
+    ];
+
     const projectColumns = [
         { header: 'Project Title', accessor: 'title' as keyof Project, className: 'w-1/3' },
         { header: 'Location', accessor: 'location_text' as keyof Project },
@@ -194,7 +234,7 @@ const ApproverDashboard = () => {
                 {activeTab === 'history' && (
                     <Table
                         data={approvedReports}
-                        columns={pendingColumns}
+                        columns={approvedColumns}
                         isLoading={loading}
                         onRowClick={handleRowClick}
                         emptyMessage="No approval history yet."

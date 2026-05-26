@@ -34,42 +34,24 @@ const DashboardLayout = () => {
                     {/* Common Links can go here if any */}
 
                     {profile?.role === 'MDA_OFFICER' && (
-                        <>
-                            <NavLink to="/dashboard" className={linkClass}>
-                                <LayoutDashboard className="w-5 h-5 mr-3" />
-                                <span>My Projects</span>
-                            </NavLink>
-                            <NavLink to="/history" className={linkClass}>
-                                <FileText className="w-5 h-5 mr-3" />
-                                <span>History</span>
-                            </NavLink>
-                        </>
+                        <NavLink to="/dashboard" className={linkClass}>
+                            <LayoutDashboard className="w-5 h-5 mr-3" />
+                            <span>Dashboard</span>
+                        </NavLink>
                     )}
 
                     {profile?.role === 'PPIMU_ADMIN' && (
-                        <>
-                            <NavLink to="/ppimu" className={linkClass}>
-                                <FileText className="w-5 h-5 mr-3" />
-                                <span>Approvals</span>
-                            </NavLink>
-                            <NavLink to="/agency-overview" className={linkClass}>
-                                <Database className="w-5 h-5 mr-3" />
-                                <span>Agency Overview</span>
-                            </NavLink>
-                        </>
+                        <NavLink to="/ppimu" className={linkClass}>
+                            <LayoutDashboard className="w-5 h-5 mr-3" />
+                            <span>Dashboard</span>
+                        </NavLink>
                     )}
 
                     {profile?.role === 'WEBMASTER_ADMIN' && (
-                        <>
-                            <NavLink to="/admin" className={linkClass}>
-                                <Settings className="w-5 h-5 mr-3" />
-                                <span>Admin Dashboard</span>
-                            </NavLink>
-                            <NavLink to="/users" className={linkClass}>
-                                <Users className="w-5 h-5 mr-3" />
-                                <span>User Management</span>
-                            </NavLink>
-                        </>
+                        <NavLink to="/admin" className={linkClass}>
+                            <LayoutDashboard className="w-5 h-5 mr-3" />
+                            <span>Dashboard</span>
+                        </NavLink>
                     )}
                 </nav>
 

@@ -69,11 +69,14 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isAppro
         }
     };
 
+    const [localApprovedStatus, setLocalApprovedStatus] = useState(false);
+
     const handleApprove = async (reportId: string) => {
         if (!confirm('Are you sure you want to approve this progress update?')) return;
         setActionLoading(reportId);
         try {
             await approveReport(reportId);
+            setLocalApprovedStatus(true);
             refetch();
             if (onProgressUpdate) onProgressUpdate();
         } catch (error) {
@@ -351,11 +354,11 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isAppro
                                 </Button>
                             )}
 
-                            {isApproverView && latestUpdate && latestUpdate.milestone_status !== 'Approved' && (
+                            {isApproverView && latestUpdate && (
                                 <div className="flex gap-2">
                                     <Button
                                         variant="outline"
-                                        disabled={!!actionLoading}
+                                        disabled={!!actionLoading || latestUpdate.milestone_status === 'Approved' || localApprovedStatus}
                                         onClick={() => {
                                             setUpdateToEdit(latestUpdate);
                                             setIsUpdateModalOpen(true);
@@ -364,20 +367,12 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isAppro
                                         Edit
                                     </Button>
                                     <Button
-                                        variant="danger"
-                                        disabled={!!actionLoading}
-                                        isLoading={actionLoading === latestUpdate.id}
-                                        onClick={() => handleReject(latestUpdate.id)}
-                                    >
-                                        Request Changes
-                                    </Button>
-                                    <Button
                                         variant="primary"
-                                        disabled={!!actionLoading}
+                                        disabled={!!actionLoading || latestUpdate.milestone_status === 'Approved' || localApprovedStatus}
                                         isLoading={actionLoading === latestUpdate.id}
                                         onClick={() => handleApprove(latestUpdate.id)}
                                     >
-                                        Approve
+                                        {latestUpdate.milestone_status === 'Approved' || localApprovedStatus ? 'Approved' : 'Approve'}
                                     </Button>
                                 </div>
                             )}
