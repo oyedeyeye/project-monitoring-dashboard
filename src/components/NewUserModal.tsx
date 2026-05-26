@@ -55,9 +55,10 @@ const NewUserModal = ({ isOpen, onClose, mdas, onSuccess }: NewUserModalProps) =
         <Modal isOpen={isOpen} onClose={onClose} title="Add New User">
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                    <label htmlFor="full_name" className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
                     <input
                         type="text"
+                        id="full_name"
                         name="full_name"
                         value={formData.full_name}
                         onChange={handleChange}
@@ -67,9 +68,10 @@ const NewUserModal = ({ isOpen, onClose, mdas, onSuccess }: NewUserModalProps) =
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
                     <input
                         type="email"
+                        id="email"
                         name="email"
                         value={formData.email}
                         onChange={handleChange}
@@ -79,9 +81,10 @@ const NewUserModal = ({ isOpen, onClose, mdas, onSuccess }: NewUserModalProps) =
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
                     <input
                         type="password"
+                        id="password"
                         name="password"
                         value={formData.password}
                         onChange={handleChange}
@@ -93,8 +96,9 @@ const NewUserModal = ({ isOpen, onClose, mdas, onSuccess }: NewUserModalProps) =
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                    <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">Role</label>
                     <select
+                        id="role"
                         name="role"
                         value={formData.role}
                         onChange={handleChange}
@@ -107,8 +111,9 @@ const NewUserModal = ({ isOpen, onClose, mdas, onSuccess }: NewUserModalProps) =
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">MDA</label>
+                    <label htmlFor="mda_id" className="block text-sm font-medium text-gray-700 mb-1">MDA</label>
                     <select
+                        id="mda_id"
                         name="mda_id"
                         value={formData.mda_id}
                         onChange={handleChange}

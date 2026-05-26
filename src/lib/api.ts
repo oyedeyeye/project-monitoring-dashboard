@@ -3,7 +3,7 @@ import axios from 'axios';
 // The baseUrl points to your NestJS backend. 
 // For local development it is typically http://localhost:3000
 export const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'https://papayawhip-eland-294918.hostingersite.com/',
+    baseURL: import.meta.env.VITE_API_URL,
     headers: {
         'Content-Type': 'application/json',
     },
@@ -16,12 +16,12 @@ api.interceptors.request.use(
         if (token && config.headers) {
             config.headers.Authorization = `Bearer ${token}`;
         }
-        
+
         // Convert outgoing snake_case data to camelCase for Prisma
         if (config.data && !(config.data instanceof FormData)) {
             config.data = convertKeysToCamelCase(config.data);
         }
-        
+
         return config;
     },
     (error) => {

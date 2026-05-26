@@ -79,9 +79,10 @@ const UpdateModal = ({ isOpen, onClose, projectId, projectTitle, existingUpdate,
         <Modal isOpen={isOpen} onClose={onClose} title={`${existingUpdate ? 'Edit' : 'Submit'} Progress: ${projectTitle}`}>
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Report Date</label>
+                    <label htmlFor="report_date" className="block text-sm font-medium text-gray-700 mb-1">Report Date</label>
                     <input
                         type="date"
+                        id="report_date"
                         name="report_date"
                         value={formData.report_date}
                         onChange={handleChange}
@@ -92,9 +93,10 @@ const UpdateModal = ({ isOpen, onClose, projectId, projectTitle, existingUpdate,
 
                 <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Progress (%)</label>
+                        <label htmlFor="physical_progress_pct" className="block text-sm font-medium text-gray-700 mb-1">Progress (%)</label>
                         <input
                             type="number"
+                            id="physical_progress_pct"
                             name="physical_progress_pct"
                             min="0"
                             max="100"
@@ -105,8 +107,9 @@ const UpdateModal = ({ isOpen, onClose, projectId, projectTitle, existingUpdate,
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Stage</label>
+                        <label htmlFor="stage" className="block text-sm font-medium text-gray-700 mb-1">Stage</label>
                         <select
+                            id="stage"
                             name="stage"
                             value={formData.stage}
                             onChange={handleChange}
@@ -121,8 +124,9 @@ const UpdateModal = ({ isOpen, onClose, projectId, projectTitle, existingUpdate,
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Key Update / Comments</label>
+                    <label htmlFor="key_update" className="block text-sm font-medium text-gray-700 mb-1">Key Update / Comments</label>
                     <textarea
+                        id="key_update"
                         name="key_update"
                         rows={3}
                         value={formData.key_update}
@@ -134,9 +138,10 @@ const UpdateModal = ({ isOpen, onClose, projectId, projectTitle, existingUpdate,
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Evidence Link (Optional)</label>
+                    <label htmlFor="evidence_link" className="block text-sm font-medium text-gray-700 mb-1">Evidence Link (Optional)</label>
                     <input
                         type="url"
+                        id="evidence_link"
                         name="evidence_link"
                         value={formData.evidence_link}
                         onChange={handleChange}

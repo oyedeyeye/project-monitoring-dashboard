@@ -69,9 +69,10 @@ const EditUserModal = ({ isOpen, onClose, user, mdas, onSuccess, onUpdate, curre
         <Modal isOpen={isOpen} onClose={onClose} title="Edit User Details">
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                    <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
                     <input
                         type="text"
+                        id="fullName"
                         name="fullName"
                         value={formData.fullName}
                         onChange={handleChange}
@@ -81,9 +82,10 @@ const EditUserModal = ({ isOpen, onClose, user, mdas, onSuccess, onUpdate, curre
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
                     <input
                         type="email"
+                        id="email"
                         name="email"
                         value={formData.email}
                         onChange={handleChange}
@@ -93,9 +95,10 @@ const EditUserModal = ({ isOpen, onClose, user, mdas, onSuccess, onUpdate, curre
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">New Password (Leave blank to keep unchanged)</label>
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">New Password (Leave blank to keep unchanged)</label>
                     <input
                         type="password"
+                        id="password"
                         name="password"
                         value={formData.password}
                         onChange={handleChange}
@@ -106,8 +109,9 @@ const EditUserModal = ({ isOpen, onClose, user, mdas, onSuccess, onUpdate, curre
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                    <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">Role</label>
                     <select
+                        id="role"
                         name="role"
                         value={formData.role}
                         onChange={handleChange}
@@ -122,8 +126,9 @@ const EditUserModal = ({ isOpen, onClose, user, mdas, onSuccess, onUpdate, curre
 
                 {formData.role !== 'WEBMASTER_ADMIN' && (
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">MDA</label>
+                        <label htmlFor="mdaId" className="block text-sm font-medium text-gray-700 mb-1">MDA</label>
                         <select
+                            id="mdaId"
                             name="mdaId"
                             value={formData.mdaId}
                             onChange={handleChange}

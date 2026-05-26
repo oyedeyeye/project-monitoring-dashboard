@@ -77,6 +77,9 @@ const Login = () => {
                             <i className="fa-solid fa-envelope absolute left-[15px] top-1/2 -translate-y-1/2 text-[#a67c52]"></i>
                             <input
                                 type="email"
+                                id="email"
+                                name="email"
+                                autoComplete="email"
                                 placeholder="Email"
                                 required
                                 className="w-full py-[14px] pr-[14px] pl-[45px] border border-[#e0e0e0] bg-[#f5f5f5] rounded-[12px] text-[1rem] text-[#2c1e16] outline-none transition-colors duration-300 focus:border-[#ff6b00] focus:bg-white placeholder:text-[#999]"
@@ -89,6 +92,9 @@ const Login = () => {
                             <i className="fa-solid fa-lock absolute left-[15px] top-1/2 -translate-y-1/2 text-[#a67c52]"></i>
                             <input
                                 type="password"
+                                id="password"
+                                name="password"
+                                autoComplete="current-password"
                                 placeholder="Password"
                                 required
                                 className="w-full py-[14px] pr-[14px] pl-[45px] border border-[#e0e0e0] bg-[#f5f5f5] rounded-[12px] text-[1rem] text-[#2c1e16] outline-none transition-colors duration-300 focus:border-[#ff6b00] focus:bg-white placeholder:text-[#999]"
