@@ -16,12 +16,42 @@ api.interceptors.request.use(
         if (token && config.headers) {
             config.headers.Authorization = `Bearer ${token}`;
         }
+        
+        // Convert outgoing snake_case data to camelCase for Prisma
+        if (config.data && !(config.data instanceof FormData)) {
+            config.data = convertKeysToCamelCase(config.data);
+        }
+        
         return config;
     },
     (error) => {
         return Promise.reject(error);
     }
 );
+
+function snakeToCamel(str: string): string {
+    return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+}
+
+function convertKeysToCamelCase(obj: any): any {
+    if (Array.isArray(obj)) {
+        return obj.map(convertKeysToCamelCase);
+    } else if (obj !== null && typeof obj === 'object') {
+        if (obj instanceof Date) return obj;
+        const newObj: any = {};
+        for (const key in obj) {
+            if (Object.prototype.hasOwnProperty.call(obj, key)) {
+                let newKey = snakeToCamel(key);
+                if (newKey === 'projects') {
+                    newKey = 'project';
+                }
+                newObj[newKey] = convertKeysToCamelCase(obj[key]);
+            }
+        }
+        return newObj;
+    }
+    return obj;
+}
 
 // Helper functions for key conversion
 function camelToSnake(str: string): string {

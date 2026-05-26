@@ -19,7 +19,7 @@ interface ProjectDetailsModalProps {
 }
 
 const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isApproverView, onProgressUpdate }: ProjectDetailsModalProps) => {
-    const { updates, issues, loading, refetch } = useProjectDetails(project.project_id);
+    const { updates, issues, loading, refetch } = useProjectDetails(project.project_id || (project as any).id);
     const { approveReport } = useReports();
     const { user } = useAuth();
     const [activeTab, setActiveTab] = useState<'overview' | 'history' | 'issues'>('overview');
@@ -156,11 +156,13 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isAppro
 
             <div className="mt-4 border-t pt-4">
                 <h4 className="font-medium text-gray-800 mb-2">Project Info</h4>
-                <div className="text-sm space-y-2 text-gray-600">
-                    <p><span className="font-semibold w-24 inline-block">Title:</span> {project.title}</p>
-                    <p><span className="font-semibold w-24 inline-block">Location:</span> {project.location_text}</p>
-                    <p><span className="font-semibold w-24 inline-block">Start Date:</span> {project.start_date ? new Date(project.start_date).toLocaleDateString() : 'N/A'}</p>
-                    <p><span className="font-semibold w-24 inline-block">Budget:</span> ₦{Number(project.approved_budget).toLocaleString()}</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-4 text-sm text-gray-600">
+                    <p className="md:col-span-2"><span className="font-semibold w-32 inline-block text-gray-700">Title:</span> {project.title}</p>
+                    <p><span className="font-semibold w-32 inline-block text-gray-700">Sen. District:</span> {project.senatorial_district || 'N/A'}</p>
+                    <p><span className="font-semibold w-32 inline-block text-gray-700">Start Date:</span> {project.start_date ? new Date(project.start_date).toLocaleDateString() : 'N/A'}</p>
+                    <p><span className="font-semibold w-32 inline-block text-gray-700">Budget:</span> ₦{Number(project.approved_budget).toLocaleString()}</p>
+                    <p><span className="font-semibold w-32 inline-block text-gray-700">Funding:</span> {project.funding_source || 'N/A'}</p>
+                    <p className="md:col-span-2"><span className="font-semibold w-32 inline-block text-gray-700">Contractor:</span> {project.contractor || 'N/A'}</p>
                 </div>
             </div>
         </div>

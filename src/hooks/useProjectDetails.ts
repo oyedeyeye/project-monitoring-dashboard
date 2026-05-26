@@ -13,16 +13,19 @@ export const useProjectDetails = (projectId: string | null) => {
         setLoading(true);
         setError(null);
         try {
-            const [updatesRes, issuesRes] = await Promise.all([
-                api.get(`/progress-updates?projectId=${projectId}&limit=10`),
-                api.get(`/issues?projectId=${projectId}`)
-            ]);
-
+            const updatesRes = await api.get(`/progress-updates?projectId=${projectId}&limit=10`);
             setUpdates(updatesRes.data.data || []);
+        } catch (err: any) {
+            console.error('Error fetching project updates:', err);
+            setError(err.message || 'Failed to fetch project updates');
+        }
+
+        try {
+            const issuesRes = await api.get(`/issues?projectId=${projectId}`);
             setIssues(issuesRes.data || []);
         } catch (err: any) {
-            console.error('Error fetching project details:', err);
-            setError(err.message || 'Failed to fetch project details');
+            console.error('Error fetching project issues (endpoint might not exist yet):', err);
+            // Don't fail the whole view if issues fail
         } finally {
             setLoading(false);
         }
