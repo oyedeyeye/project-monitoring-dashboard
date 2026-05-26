@@ -2,8 +2,10 @@ import axios from 'axios';
 
 // The baseUrl points to your NestJS backend. 
 // For local development it is typically http://localhost:3000
+const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
 export const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL,
+    baseURL: import.meta.env.VITE_API_URL || (isLocal ? 'http://localhost:5000' : 'https://papayawhip-eland-294918.hostingersite.com'),
     headers: {
         'Content-Type': 'application/json',
     },
