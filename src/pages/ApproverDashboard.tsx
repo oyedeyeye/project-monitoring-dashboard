@@ -24,8 +24,8 @@ const ApproverDashboard = () => {
 
     const handleRowClick = (updateOrProject: any) => {
         // Map the parameter to an adequate Project shape depending on whether it's an update with joined project or just a project
-        const projectBase = updateOrProject.projects
-            ? { projectId: updateOrProject.projectId, ...updateOrProject.projects, approvedBudget: 0 }
+        const projectBase = updateOrProject.project
+            ? { projectId: updateOrProject.projectId, ...updateOrProject.project }
             : updateOrProject;
 
         setSelectedProject(projectBase);
@@ -50,7 +50,7 @@ const ApproverDashboard = () => {
         },
         {
             header: 'Project',
-            accessor: (item: ProgressUpdate) => (item as any).projects?.title || 'Unknown Project'
+            accessor: (item: ProgressUpdate) => (item as any).project?.title || 'Unknown Project'
         },
         {
             header: 'Progress',
@@ -90,7 +90,7 @@ const ApproverDashboard = () => {
         },
         {
             header: 'Project',
-            accessor: (item: ProgressUpdate) => (item as any).projects?.title || 'Unknown Project'
+            accessor: (item: ProgressUpdate) => (item as any).project?.title || 'Unknown Project'
         },
         {
             header: 'Progress',
@@ -159,9 +159,9 @@ const ApproverDashboard = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                    <h1 className="text-2xl font-bold text-gray-800 flex flex-wrap items-center gap-3">
                         Approvals
                         {mdaName && (
                             <span className="px-3 py-1 bg-blue-50 text-blue-700 text-sm font-medium rounded-full border border-blue-100">
@@ -171,7 +171,7 @@ const ApproverDashboard = () => {
                     </h1>
                     <p className="text-gray-500 mt-1">Review and approve project progress reports.</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 self-start sm:self-auto">
                     <button
                         onClick={() => setActiveTab('pending')}
                         className="relative p-2 text-gray-500 hover:text-gray-700 bg-white rounded-lg border border-gray-200 transition-all hover:bg-gray-50"
@@ -190,7 +190,7 @@ const ApproverDashboard = () => {
                 </div>
             </div>
 
-            <div className="flex space-x-4 border-b border-gray-200">
+            <div className="flex flex-wrap gap-2 border-b border-gray-200">
                 {(['pending', 'overview', 'history'] as const).map((tab) => (
                     <button
                         key={tab}

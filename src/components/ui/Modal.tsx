@@ -38,7 +38,7 @@ const Modal = ({ isOpen, onClose, title, children, maxWidth = 'md' }: ModalProps
                 </div>
 
                 {/* Body */}
-                <div className="p-6">
+                <div className="p-6 max-h-[calc(100vh-10rem)] overflow-y-auto">
                     {children}
                 </div>
             </div>

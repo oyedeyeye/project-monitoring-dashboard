@@ -167,9 +167,9 @@ const AdminDashboard = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                    <h1 className="text-2xl font-bold text-gray-800 flex flex-wrap items-center gap-3">
                         Admin Dashboard
                         {mdaName && (
                             <span className="px-3 py-1 bg-blue-50 text-blue-700 text-sm font-medium rounded-full border border-blue-100">
@@ -179,7 +179,7 @@ const AdminDashboard = () => {
                     </h1>
                     <p className="text-gray-500 mt-1">Manage system users and configurations.</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 self-start sm:self-auto">
                     <Button onClick={handleRefresh} variant="ghost" size="sm">Refresh</Button>
                     <Button onClick={() => setIsModalOpen(true)}>
                         <UserPlus className="w-4 h-4 mr-2" />
@@ -215,7 +215,7 @@ const AdminDashboard = () => {
                 ) : (
                     // --- Main Tabs View ---
                     <>
-                        <div className="flex space-x-4 border-b border-gray-100 bg-gray-50/50 px-4 pt-2">
+                        <div className="flex flex-wrap gap-2 border-b border-gray-100 bg-gray-50/50 px-4 pt-2">
                             {(['mdas', 'users'] as const).map((tab) => (
                                 <button
                                     key={tab}
