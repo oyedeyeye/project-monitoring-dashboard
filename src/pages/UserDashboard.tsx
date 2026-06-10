@@ -57,10 +57,10 @@ const UserDashboard = () => {
             className: 'w-12 text-gray-400 font-medium'
         },
         { header: 'Project Title', accessor: 'title' as keyof Project, className: 'w-1/3' },
-        { header: 'Location', accessor: 'location_text' as keyof Project },
+        { header: 'Location', accessor: 'locationText' as keyof Project },
         {
             header: 'Budget',
-            accessor: (item: Project) => `₦${Number(item.approved_budget).toLocaleString()}`
+            accessor: (item: Project) => `₦${Number(item.approvedBudget).toLocaleString()}`
         },
         {
             header: 'Status',
@@ -80,7 +80,7 @@ const UserDashboard = () => {
         },
         {
             header: 'Date',
-            accessor: (item: any) => new Date(item.report_date || item.created_at).toLocaleDateString(),
+            accessor: (item: any) => new Date(item.reportDate || item.createdAt).toLocaleDateString(),
             className: 'w-32'
         },
         {
@@ -90,7 +90,7 @@ const UserDashboard = () => {
         },
         {
             header: 'Progress',
-            accessor: (item: any) => `${item.physical_progress_pct}%`,
+            accessor: (item: any) => `${item.physicalProgressPct}%`,
             className: 'w-24'
         },
         {
@@ -105,7 +105,7 @@ const UserDashboard = () => {
         {
             header: 'Status',
             accessor: (item: any) => {
-                const status = item.milestone_status || 'Draft';
+                const status = item.milestoneStatus || 'Draft';
                 const variant = 
                     status === 'Approved' ? 'success' :
                     status === 'Ready for Approval' ? 'info' :
@@ -191,7 +191,7 @@ const UserDashboard = () => {
                         />
 
                         {/* Elegant Projects Pagination Controls */}
-                        {projectsMeta && projectsMeta.total_pages > 0 && (
+                        {projectsMeta && projectsMeta.totalPages > 0 && (
                             <div className="flex flex-col sm:flex-row items-center justify-between p-4 gap-4 border-t border-gray-100 bg-gray-50 rounded-b-lg">
                                 <div className="flex flex-wrap items-center gap-4">
                                     <span className="text-sm text-gray-600">
@@ -225,8 +225,8 @@ const UserDashboard = () => {
                                         Previous
                                     </button>
                                     
-                                    {Array.from({ length: projectsMeta.total_pages }, (_, i) => i + 1)
-                                        .filter((p) => Math.abs(p - projectsPage) <= 2 || p === 1 || p === projectsMeta.total_pages)
+                                    {Array.from({ length: projectsMeta.totalPages }, (_, i) => i + 1)
+                                        .filter((p) => Math.abs(p - projectsPage) <= 2 || p === 1 || p === projectsMeta.totalPages)
                                         .map((p, idx, array) => {
                                             const showEllipsis = idx > 0 && p - array[idx - 1] > 1;
                                             return (
@@ -247,8 +247,8 @@ const UserDashboard = () => {
                                         })}
 
                                     <button
-                                        onClick={() => setProjectsPage(Math.min(projectsMeta.total_pages, projectsPage + 1))}
-                                        disabled={projectsPage === projectsMeta.total_pages}
+                                        onClick={() => setProjectsPage(Math.min(projectsMeta.totalPages, projectsPage + 1))}
+                                        disabled={projectsPage === projectsMeta.totalPages}
                                         className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none transition-colors"
                                     >
                                         Next
@@ -270,7 +270,7 @@ const UserDashboard = () => {
                         />
                         
                         {/* Elegant Pagination Controls */}
-                        {meta && meta.total_pages > 0 && (
+                        {meta && meta.totalPages > 0 && (
                             <div className="flex flex-col sm:flex-row items-center justify-between p-4 gap-4 border-t border-gray-100 bg-gray-50 rounded-b-lg">
                                 <div className="flex flex-wrap items-center gap-4">
                                     <span className="text-sm text-gray-600">
@@ -304,8 +304,8 @@ const UserDashboard = () => {
                                         Previous
                                     </button>
                                     
-                                    {Array.from({ length: meta.total_pages }, (_, i) => i + 1)
-                                        .filter((p) => Math.abs(p - page) <= 2 || p === 1 || p === meta.total_pages)
+                                    {Array.from({ length: meta.totalPages }, (_, i) => i + 1)
+                                        .filter((p) => Math.abs(p - page) <= 2 || p === 1 || p === meta.totalPages)
                                         .map((p, idx, array) => {
                                             const showEllipsis = idx > 0 && p - array[idx - 1] > 1;
                                             return (
@@ -326,8 +326,8 @@ const UserDashboard = () => {
                                         })}
 
                                     <button
-                                        onClick={() => setPage(Math.min(meta.total_pages, page + 1))}
-                                        disabled={page === meta.total_pages}
+                                        onClick={() => setPage(Math.min(meta.totalPages, page + 1))}
+                                        disabled={page === meta.totalPages}
                                         className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none transition-colors"
                                     >
                                         Next
@@ -342,7 +342,10 @@ const UserDashboard = () => {
             {selectedProject && isModalOpen && (
                 <ProjectDetailsModal
                     isOpen={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
+                    onClose={() => {
+                        setIsModalOpen(false);
+                        setSelectedProject(null);
+                    }}
                     project={selectedProject}
                     onProgressUpdate={handleRefresh}
                 />

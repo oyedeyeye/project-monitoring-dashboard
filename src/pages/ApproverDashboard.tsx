@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useReports } from '../hooks/useReports';
 import { useProjects } from '../hooks/useProjects';
@@ -23,18 +22,16 @@ const ApproverDashboard = () => {
     const [selectedUpdate, setSelectedUpdate] = useState<ProgressUpdate | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-
-
     const handleRowClick = (updateOrProject: any) => {
         // Map the parameter to an adequate Project shape depending on whether it's an update with joined project or just a project
         const projectBase = updateOrProject.projects
-            ? { project_id: updateOrProject.project_id, ...updateOrProject.projects, approved_budget: 0 }
+            ? { projectId: updateOrProject.projectId, ...updateOrProject.projects, approvedBudget: 0 }
             : updateOrProject;
 
         setSelectedProject(projectBase);
         
         // If the row clicked represents a progress update (e.g. pending approvals), preserve it
-        if (updateOrProject.milestone_status) {
+        if (updateOrProject.milestoneStatus) {
             setSelectedUpdate(updateOrProject);
         } else {
             setSelectedUpdate(null);
@@ -43,15 +40,13 @@ const ApproverDashboard = () => {
         setIsModalOpen(true);
     };
 
-
-
-    const pendingReports = reports.filter(r => r.milestone_status !== 'Approved');
-    const approvedReports = reports.filter(r => r.milestone_status === 'Approved');
+    const pendingReports = reports.filter(r => r.milestoneStatus !== 'Approved');
+    const approvedReports = reports.filter(r => r.milestoneStatus === 'Approved');
 
     const pendingColumns = [
         { 
             header: 'Date', 
-            accessor: (item: ProgressUpdate) => new Date(item.report_date).toLocaleDateString() 
+            accessor: (item: ProgressUpdate) => new Date(item.reportDate).toLocaleDateString() 
         },
         {
             header: 'Project',
@@ -59,7 +54,7 @@ const ApproverDashboard = () => {
         },
         {
             header: 'Progress',
-            accessor: (item: ProgressUpdate) => `${item.physical_progress_pct}%`
+            accessor: (item: ProgressUpdate) => `${item.physicalProgressPct}%`
         },
         {
             header: 'Stage',
@@ -68,8 +63,8 @@ const ApproverDashboard = () => {
         {
             header: 'Status',
             accessor: (item: ProgressUpdate) => (
-                <Badge variant={item.milestone_status === 'Approved' ? 'success' : 'warning'}>
-                    {item.milestone_status}
+                <Badge variant={item.milestoneStatus === 'Approved' ? 'success' : 'warning'}>
+                    {item.milestoneStatus}
                 </Badge>
             )
         },
@@ -91,7 +86,7 @@ const ApproverDashboard = () => {
     const approvedColumns = [
         { 
             header: 'Date', 
-            accessor: (item: ProgressUpdate) => new Date(item.report_date).toLocaleDateString() 
+            accessor: (item: ProgressUpdate) => new Date(item.reportDate).toLocaleDateString() 
         },
         {
             header: 'Project',
@@ -99,7 +94,7 @@ const ApproverDashboard = () => {
         },
         {
             header: 'Progress',
-            accessor: (item: ProgressUpdate) => `${item.physical_progress_pct}%`
+            accessor: (item: ProgressUpdate) => `${item.physicalProgressPct}%`
         },
         {
             header: 'Stage',
@@ -109,7 +104,7 @@ const ApproverDashboard = () => {
             header: 'Status',
             accessor: (item: ProgressUpdate) => (
                 <Badge variant="success">
-                    {item.milestone_status}
+                    {item.milestoneStatus}
                 </Badge>
             )
         },
@@ -130,7 +125,7 @@ const ApproverDashboard = () => {
 
     const projectColumns = [
         { header: 'Project Title', accessor: 'title' as keyof Project, className: 'w-1/3' },
-        { header: 'Location', accessor: 'location_text' as keyof Project },
+        { header: 'Location', accessor: 'locationText' as keyof Project },
         {
             header: 'Status',
             accessor: (item: Project) => (
@@ -228,7 +223,7 @@ const ApproverDashboard = () => {
                         isLoading={projectsLoading}
                         onRowClick={handleRowClick}
                         emptyMessage="No projects found for this MDA."
-                        keyExtractor={(item) => item.project_id}
+                        keyExtractor={(item) => item.projectId}
                     />
                 )}
                 {activeTab === 'history' && (
@@ -256,8 +251,6 @@ const ApproverDashboard = () => {
                     onProgressUpdate={() => refetch()}
                 />
             )}
-
-
         </div>
     );
 };

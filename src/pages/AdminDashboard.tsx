@@ -8,6 +8,7 @@ import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import NewUserModal from '../components/NewUserModal';
 import EditUserModal from '../components/EditUserModal';
+import ConfirmModal from '../components/ui/ConfirmModal';
 import { UserProfile, MDA, Project } from '../types/api';
 import { UserPlus, ArrowLeft, Building2 } from 'lucide-react';
 
@@ -38,6 +39,11 @@ const AdminDashboard = () => {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedEditUser, setSelectedEditUser] = useState<any | null>(null);
 
+    // Confirm Delete Modal State
+    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+    const [userIdToDelete, setUserIdToDelete] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+
     // Projects fetch based on selected MDA
     const { projects, loading: projectsLoading } = useProjects(selectedMDA?.id);
 
@@ -46,14 +52,23 @@ const AdminDashboard = () => {
         return mdas.find(m => m.id === mdaId)?.name || 'Unknown';
     };
 
-    const handleDeleteUser = async (id: string) => {
-        if (window.confirm('Are you sure you want to delete this user account? This action is permanent.')) {
-            try {
-                await deleteUser(id);
-                refetchAdmin();
-            } catch (err: any) {
-                alert(err.response?.data?.message || 'Failed to delete user.');
-            }
+    const handleDeleteClick = (id: string) => {
+        setUserIdToDelete(id);
+        setIsDeleteConfirmOpen(true);
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!userIdToDelete) return;
+        setIsDeleting(true);
+        try {
+            await deleteUser(userIdToDelete);
+            refetchAdmin();
+            setIsDeleteConfirmOpen(false);
+        } catch (err: any) {
+            alert(err.response?.data?.message || 'Failed to delete user.');
+        } finally {
+            setIsDeleting(false);
+            setUserIdToDelete(null);
         }
     };
 
@@ -88,7 +103,7 @@ const AdminDashboard = () => {
                             Edit
                         </button>
                         <button
-                            onClick={() => handleDeleteUser(item.id)}
+                            onClick={() => handleDeleteClick(item.id)}
                             className="text-red-600 hover:text-red-800 font-semibold text-xs transition-colors"
                         >
                             Delete
@@ -106,8 +121,8 @@ const AdminDashboard = () => {
         {
             header: 'Staff Users',
             accessor: (item: MDA) => allUsers.filter((u: any) => {
-                const uMdaId = u.profile?.mda_id || u.profile?.mdaId || u.mda_id;
-                const uRole = u.profile?.role || u.role;
+                const uMdaId = u.mdaId;
+                const uRole = u.role;
                 return uMdaId === item.id && uRole === 'MDA_OFFICER';
             }).length
         },
@@ -125,8 +140,8 @@ const AdminDashboard = () => {
     // --- Project Columns (Drilldown) ---
     const projectColumns = [
         { header: 'Project Title', accessor: 'title' as keyof Project, className: 'w-1/3' },
-        { header: 'Location', accessor: 'location_text' as keyof Project },
-        { header: 'Fund Group', accessor: 'fund_group' as keyof Project },
+        { header: 'Location', accessor: 'locationText' as keyof Project },
+        { header: 'Fund Group', accessor: 'fundGroup' as keyof Project },
         {
             header: 'Status',
             accessor: (item: Project) => (
@@ -194,7 +209,7 @@ const AdminDashboard = () => {
                             columns={projectColumns}
                             isLoading={projectsLoading}
                             emptyMessage={`No projects found for ${selectedMDA.code || selectedMDA.name}.`}
-                            keyExtractor={(item) => item.project_id}
+                            keyExtractor={(item) => item.projectId}
                         />
                     </>
                 ) : (
@@ -226,7 +241,7 @@ const AdminDashboard = () => {
                                 />
 
                                 {/* Elegant System Users Pagination Controls */}
-                                {usersMeta && usersMeta.total_pages > 0 && (
+                                {usersMeta && usersMeta.totalPages > 0 && (
                                     <div className="flex flex-col sm:flex-row items-center justify-between p-4 gap-4 border-t border-gray-100 bg-gray-50 rounded-b-lg">
                                         <div className="flex flex-wrap items-center gap-4">
                                             <span className="text-sm text-gray-600">
@@ -260,8 +275,8 @@ const AdminDashboard = () => {
                                                 Previous
                                             </button>
                                             
-                                            {Array.from({ length: usersMeta.total_pages }, (_, i) => i + 1)
-                                                .filter((p) => Math.abs(p - usersPage) <= 2 || p === 1 || p === usersMeta.total_pages)
+                                            {Array.from({ length: usersMeta.totalPages }, (_, i) => i + 1)
+                                                .filter((p) => Math.abs(p - usersPage) <= 2 || p === 1 || p === usersMeta.totalPages)
                                                 .map((p, idx, array) => {
                                                     const showEllipsis = idx > 0 && p - array[idx - 1] > 1;
                                                     return (
@@ -282,8 +297,8 @@ const AdminDashboard = () => {
                                                 })}
 
                                             <button
-                                                onClick={() => setUsersPage(Math.min(usersMeta.total_pages, usersPage + 1))}
-                                                disabled={usersPage === usersMeta.total_pages}
+                                                onClick={() => setUsersPage(Math.min(usersMeta.totalPages, usersPage + 1))}
+                                                disabled={usersPage === usersMeta.totalPages}
                                                 className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none transition-colors"
                                             >
                                                 Next
@@ -326,6 +341,20 @@ const AdminDashboard = () => {
                 onSuccess={handleRefresh}
                 onUpdate={updateUser}
                 currentUserRole={profile?.role}
+            />
+
+            <ConfirmModal
+                isOpen={isDeleteConfirmOpen}
+                onClose={() => {
+                    setIsDeleteConfirmOpen(false);
+                    setUserIdToDelete(null);
+                }}
+                onConfirm={handleDeleteConfirm}
+                title="Delete User"
+                message="Are you sure you want to delete this user account? This action is permanent."
+                confirmText="Delete"
+                type="danger"
+                isLoading={isDeleting}
             />
         </div>
     );

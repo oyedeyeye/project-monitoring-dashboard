@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -6,80 +7,54 @@ export interface FlattenedUser {
     id: string;
     email: string;
     mdaId: string | null;
-    mda_id: string | null;
     fullName: string;
-    full_name: string;
     role: 'WEBMASTER_ADMIN' | 'PPIMU_ADMIN' | 'MDA_OFFICER' | null;
 }
 
 export const useUsers = (initialPage = 1, initialLimit = 25) => {
     const { profile } = useAuth();
-    const [users, setUsers] = useState<FlattenedUser[]>([]);
-    const [meta, setMeta] = useState<{ total: number; page: number; limit: number; totalPages: number; total_pages: number } | null>(null);
+    const queryClient = useQueryClient();
     const [page, setPage] = useState(initialPage);
     const [limit, setLimit] = useState(initialLimit);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
 
-    const fetchUsers = async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const { data } = await api.get(`/users?page=${page}&limit=${limit}`);
-            
-            // Map and flatten response structure
-            const mappedUsers = (data?.data || []).map((u: any) => {
-                const profileObj = u.profile || {};
-                return {
-                    id: u.id,
-                    email: u.email,
-                    mdaId: profileObj.mda_id || profileObj.mdaId || null,
-                    mda_id: profileObj.mda_id || profileObj.mdaId || null,
-                    fullName: profileObj.full_name || profileObj.fullName || '',
-                    full_name: profileObj.full_name || profileObj.fullName || '',
-                    role: profileObj.role || null,
-                };
-            });
-
-            setUsers(mappedUsers);
-            if (data?.meta) {
-                setMeta({
-                    total: data.meta.total,
-                    page: data.meta.page,
-                    limit: data.meta.limit,
-                    totalPages: data.meta.total_pages || data.meta.totalPages || 0,
-                    total_pages: data.meta.total_pages || data.meta.totalPages || 0,
-                });
-            } else {
-                setMeta(null);
-            }
-        } catch (err: any) {
-            console.error('Error fetching users:', err);
-            setError(err.response?.data?.message || err.message || 'Failed to fetch users');
-        } finally {
-            setLoading(false);
+    const { data, isLoading, error, refetch } = useQuery({
+        queryKey: ['users', { page, limit, profile }],
+        queryFn: async () => {
+            const response = await api.get(`/users?page=${page}&limit=${limit}`);
+            return response.data;
         }
-    };
+    });
 
-    useEffect(() => {
-        fetchUsers();
-    }, [page, limit, profile]);
+    const mappedUsers: FlattenedUser[] = (data?.data || []).map((u: any) => {
+        const profileObj = u.profile || {};
+        return {
+            id: u.id,
+            email: u.email,
+            mdaId: profileObj.mdaId || null,
+            fullName: profileObj.fullName || '',
+            role: profileObj.role || null,
+        };
+    });
 
-    const createUser = async (email: string, fullName: string, role: string, mdaId: string, password?: string) => {
-        console.log('useUsers: Creating user...', { email, fullName, role, mdaId, hasPassword: !!password });
-        try {
+    const meta = data?.meta ? {
+        total: data.meta.total,
+        page: data.meta.page,
+        limit: data.meta.limit,
+        totalPages: data.meta.totalPages || data.meta.total_pages || 0,
+        total_pages: data.meta.totalPages || data.meta.total_pages || 0,
+    } : null;
+
+    const createMutation = useMutation({
+        mutationFn: async ({ email, fullName, role, mdaId, password }: { email: string; fullName: string; role: string; mdaId: string; password?: string }) => {
             await api.post('/auth/register', { email, fullName, role, mdaId, password });
-            await fetchUsers();
-        } catch (err: any) {
-            console.error('API Error creating user:', err);
-            throw err;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['users'] });
         }
-    };
+    });
 
-    const updateUser = async (id: string, updateData: { email?: string; fullName?: string; role?: string; mdaId?: string | null; password?: string }) => {
-        console.log('useUsers: Updating user...', id, updateData);
-        try {
-            // Transform keys to correct casing if needed, or NestJS service handles UserUpdateInput
+    const updateMutation = useMutation({
+        mutationFn: async ({ id, updateData }: { id: string; updateData: { email?: string; fullName?: string; role?: string; mdaId?: string | null; password?: string } }) => {
             await api.put(`/users/${id}`, {
                 email: updateData.email,
                 password: updateData.password,
@@ -91,36 +66,36 @@ export const useUsers = (initialPage = 1, initialLimit = 25) => {
                     }
                 }
             });
-            await fetchUsers();
-        } catch (err: any) {
-            console.error('API Error updating user:', err);
-            throw err;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['users'] });
         }
-    };
+    });
 
-    const deleteUser = async (id: string) => {
-        console.log('useUsers: Deleting user...', id);
-        try {
+    const deleteMutation = useMutation({
+        mutationFn: async (id: string) => {
             await api.delete(`/users/${id}`);
-            await fetchUsers();
-        } catch (err: any) {
-            console.error('API Error deleting user:', err);
-            throw err;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['users'] });
         }
-    };
+    });
 
     return {
-        users,
+        users: mappedUsers,
         meta,
         page,
         setPage,
         limit,
         setLimit,
-        loading,
-        error,
-        createUser,
-        updateUser,
-        deleteUser,
-        refetch: fetchUsers
+        loading: isLoading,
+        error: error ? ((error as any).response?.data?.message || (error as any).message) : null,
+        createUser: (email: string, fullName: string, role: string, mdaId: string, password?: string) => 
+            createMutation.mutateAsync({ email, fullName, role, mdaId, password }),
+        updateUser: (id: string, updateData: { email?: string; fullName?: string; role?: string; mdaId?: string | null; password?: string }) => 
+            updateMutation.mutateAsync({ id, updateData }),
+        deleteUser: (id: string) => deleteMutation.mutateAsync(id),
+        refetch
     };
 };
+
