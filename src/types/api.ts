@@ -28,12 +28,13 @@ export interface ProgressUpdate {
     projectId: string;
     reportDate: string;
     physicalProgressPct: number;
-    stage: 'Execution' | 'Completed' | 'Planning' | 'Paused' | string;
+    stage: 'Yet to Start' | 'In-progress' | 'Paused' | 'Completed' | string;
     milestoneStatus: string;
     keyUpdate: string;
     issueFlag: string | null;
     evidenceLink: string | null;
     createdAt?: string;
+    issues?: Issue[];
 }
 
 export interface UserProfile {
@@ -63,6 +64,7 @@ export interface Issue {
     status: 'Open' | 'Closed' | 'Resolved' | string;
     notes: string;
     followUp: string | null;
+    progressUpdateId?: string | null;
 }
 
 export type Database = {

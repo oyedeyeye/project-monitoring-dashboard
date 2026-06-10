@@ -3,11 +3,8 @@ import Modal from './ui/Modal';
 import { Project, ProgressUpdate } from '../types/api';
 import { useProjectDetails } from '../hooks/useProjectDetails';
 import Button from './ui/Button';
-import { ISSUE_CATEGORIES, ISSUE_CATEGORY_OPTIONS } from '../constants/issueCategories';
-import { useAuth } from '../context/AuthContext';
 import UpdateModal from './UpdateModal';
 import { useReports } from '../hooks/useReports';
-import { useIssues } from '../hooks/useIssues';
 import ConfirmModal from './ui/ConfirmModal';
 
 interface ProjectDetailsModalProps {
@@ -22,17 +19,7 @@ interface ProjectDetailsModalProps {
 const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isApproverView, onProgressUpdate }: ProjectDetailsModalProps) => {
     const { updates, issues, loading, refetch } = useProjectDetails(project.projectId);
     const { approveReport } = useReports();
-    const { createIssue } = useIssues();
-    const { user } = useAuth();
-    const [activeTab, setActiveTab] = useState<'overview' | 'history' | 'issues'>('overview');
-
-    // Issue form state
-    const [isAddingIssue, setIsAddingIssue] = useState(false);
-    const [issueCategory, setIssueCategory] = useState('');
-    const [issueItem, setIssueItem] = useState('');
-    const [issueNotes, setIssueNotes] = useState('');
-    const [isSubmittingIssue, setIsSubmittingIssue] = useState(false);
-    const [issueError, setIssueError] = useState('');
+    const [activeTab, setActiveTab] = useState<'overview' | 'history'>('overview');
 
     const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
     const [updateToEdit, setUpdateToEdit] = useState<ProgressUpdate | null>(null);
@@ -41,41 +28,6 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isAppro
     // Confirm modal state
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [reportIdToApprove, setReportIdToApprove] = useState<string | null>(null);
-
-    const handleIssueSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIssueError('');
-        if (!issueCategory || !issueItem) {
-            setIssueError('Please select both category and item.');
-            return;
-        }
-
-        setIsSubmittingIssue(true);
-        try {
-            await createIssue({
-                projectId: project.projectId,
-                logDate: new Date().toISOString(),
-                issueCategory: issueCategory,
-                issueItem: issueItem,
-                severity: 3, // Default severity
-                owner: user?.id || 'Unknown',
-                status: 'Open',
-                notes: issueNotes,
-                dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-                followUp: null
-            });
-
-            setIsAddingIssue(false);
-            setIssueCategory('');
-            setIssueItem('');
-            setIssueNotes('');
-            refetch(); // Refresh after adding
-        } catch (err: any) {
-            setIssueError(err.message || 'Failed to submit issue');
-        } finally {
-            setIsSubmittingIssue(false);
-        }
-    };
 
     const [localApprovedStatus, setLocalApprovedStatus] = useState(false);
 
@@ -106,7 +58,7 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isAppro
 
     const renderTabs = () => (
         <div className="flex space-x-4 border-b border-gray-200 mb-6">
-            {(['overview', 'history', 'issues'] as const).map((tab) => (
+            {(['overview', 'history'] as const).map((tab) => (
                 <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
@@ -172,12 +124,35 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isAppro
             <div className="mt-4 border-t pt-4">
                 <h4 className="font-medium text-gray-800 mb-2">Project Info</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-4 text-sm text-gray-600">
-                    <p className="md:col-span-2"><span className="font-semibold w-32 inline-block text-gray-700">Title:</span> {project.title}</p>
                     <p><span className="font-semibold w-32 inline-block text-gray-700">Sen. District:</span> {project.senatorialDistrict || 'N/A'}</p>
                     <p><span className="font-semibold w-32 inline-block text-gray-700">Start Date:</span> {project.startDate ? new Date(project.startDate).toLocaleDateString() : 'N/A'}</p>
                     <p><span className="font-semibold w-32 inline-block text-gray-700">Budget:</span> ₦{Number(project.approvedBudget).toLocaleString()}</p>
                     <p><span className="font-semibold w-32 inline-block text-gray-700">Funding:</span> {project.fundingSource || 'N/A'}</p>
                     <p className="md:col-span-2"><span className="font-semibold w-32 inline-block text-gray-700">Contractor:</span> {project.contractor || 'N/A'}</p>
+                </div>
+            </div>
+
+            {/* Merged Issues List under Overview Tab */}
+            <div className="mt-4 border-t pt-4">
+                <h4 className="font-medium text-gray-800 mb-2">Active Issues & Risks</h4>
+                <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+                    {!issues.length ? (
+                        <p className="text-gray-500 italic text-sm">No active issues reported for this project.</p>
+                    ) : (
+                        issues.map((issue) => (
+                            <div key={issue.id} className="p-3 border border-orange-100 rounded-lg bg-orange-50/20 shadow-sm flex flex-col">
+                                <div className="flex justify-between mb-1">
+                                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${issue.status === 'Open' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                                        {issue.status}
+                                    </span>
+                                    <span className="text-xs text-gray-400">{new Date(issue.logDate).toLocaleDateString()}</span>
+                                </div>
+                                <p className="text-sm font-semibold text-gray-800">{issue.issueCategory}</p>
+                                <p className="text-xs text-gray-600 mt-0.5">{issue.issueItem}</p>
+                                {issue.notes && <p className="text-xs text-gray-500 mt-2 bg-white/80 border border-orange-100 p-2 rounded">{issue.notes}</p>}
+                            </div>
+                        ))
+                    )}
                 </div>
             </div>
         </div>
@@ -191,24 +166,46 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isAppro
                 updates.map((update) => (
                     <div key={update.id} className="border-l-2 border-primary-200 pl-4 py-2 relative group">
                         <div className="flex justify-between items-start">
-                            <div>
+                            <div className="w-full">
                                 <p className="text-xs text-gray-400 mb-1">{new Date(update.reportDate).toLocaleDateString()}</p>
                                 <p className="font-medium text-gray-800 text-sm">{update.stage} - {update.physicalProgressPct}%</p>
                                 <p className="text-sm text-gray-600 mt-1">{update.keyUpdate}</p>
-                                {update.milestoneStatus === 'Changes Required' && (
-                                    <span className="mt-1 inline-block px-2 py-0.5 bg-red-100 text-red-800 text-xs rounded-full">
-                                        Changes Required
-                                    </span>
-                                )}
-                                {update.milestoneStatus === 'Ready for Approval' && (
-                                    <span className="mt-1 inline-block px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full">
-                                        Ready for Approval
-                                    </span>
-                                )}
-                                {update.milestoneStatus === 'Approved' && (
-                                    <span className="mt-1 inline-block px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded-full">
-                                        Approved
-                                    </span>
+                                <div className="flex flex-wrap gap-2 mt-1.5">
+                                    {update.milestoneStatus === 'Changes Required' && (
+                                        <span className="px-2 py-0.5 bg-red-100 text-red-800 text-xs rounded-full">
+                                            Changes Required
+                                        </span>
+                                    )}
+                                    {update.milestoneStatus === 'Ready for Approval' && (
+                                        <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full">
+                                            Ready for Approval
+                                        </span>
+                                    )}
+                                    {update.milestoneStatus === 'Approved' && (
+                                        <span className="px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded-full">
+                                            Approved
+                                        </span>
+                                    )}
+                                </div>
+
+                                {/* Chronological association of issues inside update card */}
+                                {update.issues && update.issues.length > 0 && (
+                                    <div className="mt-3 pl-3 border-l-2 border-orange-300 bg-orange-50/40 p-2.5 rounded-r-lg space-y-2">
+                                        <p className="text-[10px] font-bold text-orange-800 uppercase tracking-wider">Associated Issue Reported:</p>
+                                        {update.issues.map((issue) => (
+                                            <div key={issue.id} className="text-xs text-gray-700">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="font-semibold text-gray-800">{issue.issueCategory}</span>
+                                                    <span className="text-gray-400">|</span>
+                                                    <span>{issue.issueItem}</span>
+                                                    <span className={`ml-auto px-1.5 py-0.5 rounded text-[10px] font-medium ${issue.status === 'Open' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                                                        {issue.status}
+                                                    </span>
+                                                </div>
+                                                <p className="text-gray-600 italic bg-white p-1.5 rounded border border-gray-100 mt-1">{issue.notes}</p>
+                                            </div>
+                                        ))}
+                                    </div>
                                 )}
                             </div>
 
@@ -217,7 +214,7 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isAppro
                                 <Button
                                     size="sm"
                                     variant="outline"
-                                    className="opacity-0 lg:opacity-100 group-hover:opacity-100 transition-opacity"
+                                    className="opacity-0 lg:opacity-100 group-hover:opacity-100 transition-opacity ml-2"
                                     onClick={() => {
                                         setUpdateToEdit(update);
                                         setIsUpdateModalOpen(true);
@@ -233,102 +230,6 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isAppro
         </div>
     );
 
-    const renderIssues = () => (
-        <div className="space-y-4">
-            <div className="flex justify-between items-center mb-4">
-                <h4 className="font-medium text-gray-800">Reported Issues</h4>
-                {!isAddingIssue && (
-                    <Button size="sm" onClick={() => setIsAddingIssue(true)}>
-                        Report Issue
-                    </Button>
-                )}
-            </div>
-
-            {isAddingIssue && (
-                <form onSubmit={handleIssueSubmit} className="bg-gray-50 p-4 rounded-lg mb-6 shadow-sm border border-gray-200">
-                    <h5 className="font-medium text-sm mb-3">New Issue</h5>
-                    <div className="space-y-3">
-                        <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">Issue Category</label>
-                            <select
-                                className="w-full text-sm rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                                value={issueCategory}
-                                onChange={(e) => {
-                                    setIssueCategory(e.target.value);
-                                    setIssueItem('');
-                                }}
-                                required
-                            >
-                                <option value="">Select Category...</option>
-                                {ISSUE_CATEGORY_OPTIONS.map((cat) => (
-                                    <option key={cat} value={cat}>{cat}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {issueCategory && (
-                            <div>
-                                <label className="block text-xs font-medium text-gray-700 mb-1">Specific Issue</label>
-                                <select
-                                    className="w-full text-sm rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                                    value={issueItem}
-                                    onChange={(e) => setIssueItem(e.target.value)}
-                                    required
-                                >
-                                    <option value="">Select Issue...</option>
-                                    {ISSUE_CATEGORIES[issueCategory].map((item) => (
-                                        <option key={item} value={item}>{item}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        )}
-
-                        <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">Additional Notes (Optional)</label>
-                            <textarea
-                                className="w-full text-sm rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                                rows={2}
-                                value={issueNotes}
-                                onChange={(e) => setIssueNotes(e.target.value)}
-                            />
-                        </div>
-
-                        {issueError && <p className="text-red-500 text-xs">{issueError}</p>}
-
-                        <div className="flex space-x-2 pt-2">
-                            <Button type="submit" size="sm" isLoading={isSubmittingIssue}>
-                                Submit
-                            </Button>
-                            <Button type="button" variant="outline" size="sm" onClick={() => setIsAddingIssue(false)}>
-                                Cancel
-                            </Button>
-                        </div>
-                    </div>
-                </form>
-            )}
-
-            <div className="space-y-3 max-h-64 overflow-y-auto">
-                {!issues.length ? (
-                    <p className="text-gray-500 italic text-sm">No issues reported.</p>
-                ) : (
-                    issues.map((issue) => (
-                        <div key={issue.id} className="p-3 border rounded-lg bg-white shadow-sm flex flex-col">
-                            <div className="flex justify-between mb-1">
-                                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${issue.status === 'Open' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
-                                    {issue.status}
-                                </span>
-                                <span className="text-xs text-gray-400">{new Date(issue.logDate).toLocaleDateString()}</span>
-                            </div>
-                            <p className="text-sm font-medium text-gray-800">{issue.issueCategory}</p>
-                            <p className="text-sm text-gray-600">{issue.issueItem}</p>
-                            {issue.notes && <p className="text-xs text-gray-500 mt-2 bg-gray-50 p-2 rounded">{issue.notes}</p>}
-                        </div>
-                    ))
-                )}
-            </div>
-        </div>
-    );
-
     return (
         <React.Fragment>
             <Modal isOpen={isOpen} onClose={onClose} title="Project Details" maxWidth="lg">
@@ -336,12 +237,14 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isAppro
                     <div className="h-64 flex justify-center items-center text-gray-500">Loading...</div>
                 ) : (
                     <>
+                        <div className="mb-4 pb-3 border-b border-gray-100">
+                            <h3 className="text-lg font-semibold text-gray-900 leading-tight">{project.title}</h3>
+                        </div>
                         {renderTabs()}
 
                         <div className="min-h-[300px]">
                             {activeTab === 'overview' && renderOverview()}
                             {activeTab === 'history' && renderHistory()}
-                            {activeTab === 'issues' && renderIssues()}
                         </div>
 
                         <div className="mt-8 pt-4 border-t flex justify-between">

@@ -15,9 +15,35 @@ export const useIssues = () => {
         }
     });
 
+    const updateIssueMutation = useMutation({
+        mutationFn: async ({ id, payload }: { id: string; payload: Partial<Issue> }) => {
+            const { data } = await api.patch(`/issues/${id}`, payload);
+            return data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['projectDetails'] });
+            queryClient.invalidateQueries({ queryKey: ['projects'] });
+        }
+    });
+
+    const deleteIssueMutation = useMutation({
+        mutationFn: async (id: string) => {
+            const { data } = await api.delete(`/issues/${id}`);
+            return data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['projectDetails'] });
+            queryClient.invalidateQueries({ queryKey: ['projects'] });
+        }
+    });
+
     return {
         createIssue: createIssueMutation.mutateAsync,
         isCreating: createIssueMutation.isPending,
-        error: createIssueMutation.error
+        updateIssue: updateIssueMutation.mutateAsync,
+        isUpdating: updateIssueMutation.isPending,
+        deleteIssue: deleteIssueMutation.mutateAsync,
+        isDeleting: deleteIssueMutation.isPending,
+        error: createIssueMutation.error || updateIssueMutation.error || deleteIssueMutation.error
     };
 };

@@ -44,8 +44,8 @@ const UserDashboard = () => {
     };
 
     const handleHistoryRowClick = (updateItem: any) => {
-        if (updateItem.projects) {
-            setSelectedProject(updateItem.projects);
+        if (updateItem.project) {
+            setSelectedProject(updateItem.project);
             setIsModalOpen(true);
         }
     };
@@ -85,7 +85,7 @@ const UserDashboard = () => {
         },
         {
             header: 'Project Title',
-            accessor: (item: any) => item.projects?.title || 'Unknown',
+            accessor: (item: any) => item.project?.title || 'Unknown',
             className: 'w-1/3 font-medium text-gray-900'
         },
         {
@@ -138,9 +138,9 @@ const UserDashboard = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                    <h1 className="text-2xl font-bold text-gray-800 flex flex-wrap items-center gap-3">
                         MDA Officer Dashboard
                         {mdaName && (
                             <span className="px-3 py-1 bg-orange-50 text-orange-700 text-sm font-medium rounded-full border border-orange-100">
@@ -150,13 +150,13 @@ const UserDashboard = () => {
                     </h1>
                     <p className="text-gray-500 mt-1">Manage and update your assigned projects and view submission history.</p>
                 </div>
-                <Button onClick={handleRefresh} variant="ghost" size="sm">
+                <Button onClick={handleRefresh} variant="ghost" size="sm" className="self-start sm:self-auto">
                     Refresh Data
                 </Button>
             </div>
 
             {/* Premium Dashboard Tabs */}
-            <div className="flex border-b border-gray-200">
+            <div className="flex flex-wrap border-b border-gray-200">
                 <button
                     onClick={() => setActiveTab('projects')}
                     className={`py-3 px-6 font-semibold text-sm transition-all relative ${
