@@ -3,11 +3,12 @@ import Modal from './ui/Modal';
 import { Project, ProgressUpdate } from '../types/api';
 import { useProjectDetails } from '../hooks/useProjectDetails';
 import Button from './ui/Button';
-import { api } from '../lib/api';
 import { ISSUE_CATEGORIES, ISSUE_CATEGORY_OPTIONS } from '../constants/issueCategories';
 import { useAuth } from '../context/AuthContext';
 import UpdateModal from './UpdateModal';
 import { useReports } from '../hooks/useReports';
+import { useIssues } from '../hooks/useIssues';
+import ConfirmModal from './ui/ConfirmModal';
 
 interface ProjectDetailsModalProps {
     isOpen: boolean;
@@ -19,8 +20,9 @@ interface ProjectDetailsModalProps {
 }
 
 const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isApproverView, onProgressUpdate }: ProjectDetailsModalProps) => {
-    const { updates, issues, loading, refetch } = useProjectDetails(project.project_id || (project as any).id);
+    const { updates, issues, loading, refetch } = useProjectDetails(project.projectId);
     const { approveReport } = useReports();
+    const { createIssue } = useIssues();
     const { user } = useAuth();
     const [activeTab, setActiveTab] = useState<'overview' | 'history' | 'issues'>('overview');
 
@@ -36,6 +38,10 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isAppro
     const [updateToEdit, setUpdateToEdit] = useState<ProgressUpdate | null>(null);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
 
+    // Confirm modal state
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [reportIdToApprove, setReportIdToApprove] = useState<string | null>(null);
+
     const handleIssueSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIssueError('');
@@ -46,15 +52,17 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isAppro
 
         setIsSubmittingIssue(true);
         try {
-            await api.post('/issues', {
-                project_id: project.project_id,
-                log_date: new Date().toISOString(),
-                issue_category: issueCategory,
-                issue_item: issueItem,
+            await createIssue({
+                projectId: project.projectId,
+                logDate: new Date().toISOString(),
+                issueCategory: issueCategory,
+                issueItem: issueItem,
                 severity: 3, // Default severity
                 owner: user?.id || 'Unknown',
                 status: 'Open',
                 notes: issueNotes,
+                dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                followUp: null
             });
 
             setIsAddingIssue(false);
@@ -71,11 +79,17 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isAppro
 
     const [localApprovedStatus, setLocalApprovedStatus] = useState(false);
 
-    const handleApprove = async (reportId: string) => {
-        if (!confirm('Are you sure you want to approve this progress update?')) return;
-        setActionLoading(reportId);
+    const handleApproveClick = (reportId: string) => {
+        setReportIdToApprove(reportId);
+        setIsConfirmOpen(true);
+    };
+
+    const handleApproveConfirm = async () => {
+        if (!reportIdToApprove) return;
+        setIsConfirmOpen(false);
+        setActionLoading(reportIdToApprove);
         try {
-            await approveReport(reportId);
+            await approveReport(reportIdToApprove);
             setLocalApprovedStatus(true);
             refetch();
             if (onProgressUpdate) onProgressUpdate();
@@ -84,6 +98,7 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isAppro
             alert('Failed to approve report.');
         } finally {
             setActionLoading(null);
+            setReportIdToApprove(null);
         }
     };
 
@@ -111,7 +126,7 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isAppro
             <div className="grid grid-cols-2 gap-4">
                 <div className="bg-gray-50 p-4 rounded-lg">
                     <p className="text-sm text-gray-500">Physical Progress</p>
-                    <p className="text-xl font-semibold">{latestUpdate ? `${latestUpdate.physical_progress_pct}%` : 'N/A'}</p>
+                    <p className="text-xl font-semibold">{latestUpdate ? `${latestUpdate.physicalProgressPct}%` : 'N/A'}</p>
                 </div>
                 <div className="bg-gray-50 p-4 rounded-lg">
                     <p className="text-sm text-gray-500">Stage</p>
@@ -119,12 +134,12 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isAppro
                 </div>
                 <div className="bg-gray-50 p-4 rounded-lg">
                     <p className="text-sm text-gray-500">Milestone Status</p>
-                    <p className="text-xl font-semibold">{latestUpdate ? latestUpdate.milestone_status : 'N/A'}</p>
+                    <p className="text-xl font-semibold">{latestUpdate ? latestUpdate.milestoneStatus : 'N/A'}</p>
                 </div>
                 <div className="bg-gray-50 p-4 rounded-lg">
                     <p className="text-sm text-gray-500">Last Report Date</p>
                     <p className="text-xl font-semibold">
-                        {latestUpdate ? new Date(latestUpdate.report_date).toLocaleDateString() : 'N/A'}
+                        {latestUpdate ? new Date(latestUpdate.reportDate).toLocaleDateString() : 'N/A'}
                     </p>
                 </div>
             </div>
@@ -135,18 +150,18 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isAppro
                     <div className="bg-orange-50/50 border border-orange-100 p-4 rounded-lg space-y-3">
                         <div>
                             <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">Key Progress Update</p>
-                            <p className="text-sm text-gray-700 mt-1 whitespace-pre-wrap">{latestUpdate.key_update || 'No update notes provided.'}</p>
+                            <p className="text-sm text-gray-700 mt-1 whitespace-pre-wrap">{latestUpdate.keyUpdate || 'No update notes provided.'}</p>
                         </div>
-                        {latestUpdate.evidence_link && (
+                        {latestUpdate.evidenceLink && (
                             <div className="pt-2 border-t border-orange-100">
                                 <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">Evidence / Attachment Link</p>
                                 <a 
-                                    href={latestUpdate.evidence_link} 
+                                    href={latestUpdate.evidenceLink} 
                                     target="_blank" 
                                     rel="noopener noreferrer" 
                                     className="text-sm text-primary-600 hover:underline mt-1 inline-block"
                                 >
-                                    {latestUpdate.evidence_link}
+                                    {latestUpdate.evidenceLink}
                                 </a>
                             </div>
                         )}
@@ -158,10 +173,10 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isAppro
                 <h4 className="font-medium text-gray-800 mb-2">Project Info</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-4 text-sm text-gray-600">
                     <p className="md:col-span-2"><span className="font-semibold w-32 inline-block text-gray-700">Title:</span> {project.title}</p>
-                    <p><span className="font-semibold w-32 inline-block text-gray-700">Sen. District:</span> {project.senatorial_district || 'N/A'}</p>
-                    <p><span className="font-semibold w-32 inline-block text-gray-700">Start Date:</span> {project.start_date ? new Date(project.start_date).toLocaleDateString() : 'N/A'}</p>
-                    <p><span className="font-semibold w-32 inline-block text-gray-700">Budget:</span> ₦{Number(project.approved_budget).toLocaleString()}</p>
-                    <p><span className="font-semibold w-32 inline-block text-gray-700">Funding:</span> {project.funding_source || 'N/A'}</p>
+                    <p><span className="font-semibold w-32 inline-block text-gray-700">Sen. District:</span> {project.senatorialDistrict || 'N/A'}</p>
+                    <p><span className="font-semibold w-32 inline-block text-gray-700">Start Date:</span> {project.startDate ? new Date(project.startDate).toLocaleDateString() : 'N/A'}</p>
+                    <p><span className="font-semibold w-32 inline-block text-gray-700">Budget:</span> ₦{Number(project.approvedBudget).toLocaleString()}</p>
+                    <p><span className="font-semibold w-32 inline-block text-gray-700">Funding:</span> {project.fundingSource || 'N/A'}</p>
                     <p className="md:col-span-2"><span className="font-semibold w-32 inline-block text-gray-700">Contractor:</span> {project.contractor || 'N/A'}</p>
                 </div>
             </div>
@@ -177,20 +192,20 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isAppro
                     <div key={update.id} className="border-l-2 border-primary-200 pl-4 py-2 relative group">
                         <div className="flex justify-between items-start">
                             <div>
-                                <p className="text-xs text-gray-400 mb-1">{new Date(update.report_date).toLocaleDateString()}</p>
-                                <p className="font-medium text-gray-800 text-sm">{update.stage} - {update.physical_progress_pct}%</p>
-                                <p className="text-sm text-gray-600 mt-1">{update.key_update}</p>
-                                {update.milestone_status === 'Changes Required' && (
+                                <p className="text-xs text-gray-400 mb-1">{new Date(update.reportDate).toLocaleDateString()}</p>
+                                <p className="font-medium text-gray-800 text-sm">{update.stage} - {update.physicalProgressPct}%</p>
+                                <p className="text-sm text-gray-600 mt-1">{update.keyUpdate}</p>
+                                {update.milestoneStatus === 'Changes Required' && (
                                     <span className="mt-1 inline-block px-2 py-0.5 bg-red-100 text-red-800 text-xs rounded-full">
                                         Changes Required
                                     </span>
                                 )}
-                                {update.milestone_status === 'Ready for Approval' && (
+                                {update.milestoneStatus === 'Ready for Approval' && (
                                     <span className="mt-1 inline-block px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full">
                                         Ready for Approval
                                     </span>
                                 )}
-                                {update.milestone_status === 'Approved' && (
+                                {update.milestoneStatus === 'Approved' && (
                                     <span className="mt-1 inline-block px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded-full">
                                         Approved
                                     </span>
@@ -198,7 +213,7 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isAppro
                             </div>
 
                             {/* Staff Action */}
-                            {!isApproverView && update.milestone_status === 'Changes Required' && (
+                            {!isApproverView && update.milestoneStatus === 'Changes Required' && (
                                 <Button
                                     size="sm"
                                     variant="outline"
@@ -302,10 +317,10 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isAppro
                                 <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${issue.status === 'Open' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
                                     {issue.status}
                                 </span>
-                                <span className="text-xs text-gray-400">{new Date(issue.log_date).toLocaleDateString()}</span>
+                                <span className="text-xs text-gray-400">{new Date(issue.logDate).toLocaleDateString()}</span>
                             </div>
-                            <p className="text-sm font-medium text-gray-800">{issue.issue_category}</p>
-                            <p className="text-sm text-gray-600">{issue.issue_item}</p>
+                            <p className="text-sm font-medium text-gray-800">{issue.issueCategory}</p>
+                            <p className="text-sm text-gray-600">{issue.issueItem}</p>
                             {issue.notes && <p className="text-xs text-gray-500 mt-2 bg-gray-50 p-2 rounded">{issue.notes}</p>}
                         </div>
                     ))
@@ -345,7 +360,7 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isAppro
                                 <div className="flex gap-2">
                                     <Button
                                         variant="outline"
-                                        disabled={!!actionLoading || latestUpdate.milestone_status === 'Approved' || localApprovedStatus}
+                                        disabled={!!actionLoading || latestUpdate.milestoneStatus === 'Approved' || localApprovedStatus}
                                         onClick={() => {
                                             setUpdateToEdit(latestUpdate);
                                             setIsUpdateModalOpen(true);
@@ -355,11 +370,11 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isAppro
                                     </Button>
                                     <Button
                                         variant="primary"
-                                        disabled={!!actionLoading || latestUpdate.milestone_status === 'Approved' || localApprovedStatus}
+                                        disabled={!!actionLoading || latestUpdate.milestoneStatus === 'Approved' || localApprovedStatus}
                                         isLoading={actionLoading === latestUpdate.id}
-                                        onClick={() => handleApprove(latestUpdate.id)}
+                                        onClick={() => handleApproveClick(latestUpdate.id)}
                                     >
-                                        {latestUpdate.milestone_status === 'Approved' || localApprovedStatus ? 'Approved' : 'Approve'}
+                                        {latestUpdate.milestoneStatus === 'Approved' || localApprovedStatus ? 'Approved' : 'Approve'}
                                     </Button>
                                 </div>
                             )}
@@ -371,7 +386,7 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isAppro
             <UpdateModal
                 isOpen={isUpdateModalOpen}
                 onClose={() => setIsUpdateModalOpen(false)}
-                projectId={project.project_id}
+                projectId={project.projectId}
                 projectTitle={project.title}
                 existingUpdate={updateToEdit}
                 onSuccess={() => {
@@ -379,6 +394,18 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isAppro
                     setIsUpdateModalOpen(false);
                     if (onProgressUpdate) onProgressUpdate();
                 }}
+            />
+
+            <ConfirmModal
+                isOpen={isConfirmOpen}
+                onClose={() => {
+                    setIsConfirmOpen(false);
+                    setReportIdToApprove(null);
+                }}
+                onConfirm={handleApproveConfirm}
+                title="Approve Update"
+                message="Are you sure you want to approve this progress update?"
+                confirmText="Approve"
             />
         </React.Fragment>
     );

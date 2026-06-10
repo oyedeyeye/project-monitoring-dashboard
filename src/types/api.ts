@@ -5,66 +5,64 @@ export interface MDA {
 }
 
 export interface Project {
-    project_id: string;
-    mda_id: string; // uuid
+    projectId: string;
+    mdaId: string; // uuid
     title: string;
     sector: string;
     lga: string;
-    senatorial_district: string;
-    location_text: string;
-    start_date: string; // Date string
-    end_date: string; // Date string
-    approved_budget: number | string; // Numeric or string in CSV/JSON
-    funding_source: string;
+    senatorialDistrict: string;
+    locationText: string;
+    startDate: string; // Date string
+    endDate: string; // Date string
+    approvedBudget: number | string; // Numeric or string in CSV/JSON
+    fundingSource: string;
     contractor: string | null;
     status: string;
-    created_at?: string;
+    createdAt?: string;
     // Computed or joined fields
     mda?: string;
 }
 
 export interface ProgressUpdate {
     id: string; // uuid
-    project_id: string;
-    report_date: string;
-    physical_progress_pct: number;
+    projectId: string;
+    reportDate: string;
+    physicalProgressPct: number;
     stage: 'Execution' | 'Completed' | 'Planning' | 'Paused' | string;
-    milestone_status: string;
-    key_update: string;
-    issue_flag: string | null;
-    evidence_link: string | null;
-    created_at?: string;
+    milestoneStatus: string;
+    keyUpdate: string;
+    issueFlag: string | null;
+    evidenceLink: string | null;
+    createdAt?: string;
 }
 
 export interface UserProfile {
     id: string; // uuid
     mdaId: string | null; // uuid
-    mda_id?: string | null;
     fullName: string;
-    full_name?: string;
     role: 'WEBMASTER_ADMIN' | 'PPIMU_ADMIN' | 'MDA_OFFICER' | null;
 }
 
 export interface FinanceRecord {
     id: string; // uuid
-    project_id: string;
-    budget_year: number;
-    release_to_date: number | string;
-    payments_to_date: number | string;
+    projectId: string;
+    budgetYear: number;
+    releaseToDate: number | string;
+    paymentsToDate: number | string;
 }
 
 export interface Issue {
     id: string; // uuid
-    project_id: string;
-    log_date: string;
-    issue_category: string;
-    issue_item: string;
+    projectId: string;
+    logDate: string;
+    issueCategory: string;
+    issueItem: string;
     severity: number;
     owner: string;
-    due_date: string;
+    dueDate: string;
     status: 'Open' | 'Closed' | 'Resolved' | string;
     notes: string;
-    follow_up: string | null;
+    followUp: string | null;
 }
 
 export type Database = {
@@ -77,13 +75,13 @@ export type Database = {
             };
             projects: {
                 Row: Project;
-                Insert: Omit<Project, 'created_at'>;
-                Update: Partial<Omit<Project, 'created_at'>>;
+                Insert: Omit<Project, 'createdAt'>;
+                Update: Partial<Omit<Project, 'createdAt'>>;
             };
             progress_updates: {
                 Row: ProgressUpdate;
-                Insert: Omit<ProgressUpdate, 'id' | 'created_at'>;
-                Update: Partial<Omit<ProgressUpdate, 'id' | 'created_at'>>;
+                Insert: Omit<ProgressUpdate, 'id' | 'createdAt'>;
+                Update: Partial<Omit<ProgressUpdate, 'id' | 'createdAt'>>;
             };
             profiles: {
                 Row: UserProfile;
@@ -103,3 +101,4 @@ export type Database = {
         };
     };
 };
+

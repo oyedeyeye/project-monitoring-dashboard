@@ -1,6 +1,5 @@
-
 import { useState } from 'react';
-import { useAdmin } from '../hooks/useAdmin'; // Assuming useAdmin handles creation
+import { useAdmin } from '../hooks/useAdmin';
 import Modal from './ui/Modal';
 import Button from './ui/Button';
 import { MDA } from '../types/api';
@@ -17,9 +16,9 @@ const NewUserModal = ({ isOpen, onClose, mdas, onSuccess }: NewUserModalProps) =
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         email: '',
-        full_name: '',
+        fullName: '',
         role: 'MDA_OFFICER' as 'MDA_OFFICER' | 'PPIMU_ADMIN' | 'WEBMASTER_ADMIN',
-        mda_id: '',
+        mdaId: '',
         password: '',
     });
 
@@ -32,15 +31,15 @@ const NewUserModal = ({ isOpen, onClose, mdas, onSuccess }: NewUserModalProps) =
         e.preventDefault();
         setLoading(true);
         try {
-            await createUser(formData.email, formData.full_name, formData.role, formData.mda_id, formData.password);
+            await createUser(formData.email, formData.fullName, formData.role, formData.mdaId, formData.password);
             onSuccess();
             onClose();
             // Reset
             setFormData({
                 email: '',
-                full_name: '',
+                fullName: '',
                 role: 'MDA_OFFICER',
-                mda_id: '',
+                mdaId: '',
                 password: '',
             });
         } catch (error) {
@@ -55,12 +54,12 @@ const NewUserModal = ({ isOpen, onClose, mdas, onSuccess }: NewUserModalProps) =
         <Modal isOpen={isOpen} onClose={onClose} title="Add New User">
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                    <label htmlFor="full_name" className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                    <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
                     <input
                         type="text"
-                        id="full_name"
-                        name="full_name"
-                        value={formData.full_name}
+                        id="fullName"
+                        name="fullName"
+                        value={formData.fullName}
                         onChange={handleChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500 outline-none transition-shadow"
                         required
@@ -111,11 +110,11 @@ const NewUserModal = ({ isOpen, onClose, mdas, onSuccess }: NewUserModalProps) =
                 </div>
 
                 <div>
-                    <label htmlFor="mda_id" className="block text-sm font-medium text-gray-700 mb-1">MDA</label>
+                    <label htmlFor="mdaId" className="block text-sm font-medium text-gray-700 mb-1">MDA</label>
                     <select
-                        id="mda_id"
-                        name="mda_id"
-                        value={formData.mda_id}
+                        id="mdaId"
+                        name="mdaId"
+                        value={formData.mdaId}
                         onChange={handleChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500 outline-none transition-shadow"
                         required

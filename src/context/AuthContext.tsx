@@ -38,12 +38,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 setUser({ id: userData.id, email: userData.email });
 
                 const profileData = userData.profile;
-                if (profileData) {
-                    profileData.mdaId = profileData.mdaId || profileData.mda_id;
-                    profileData.mda_id = profileData.mdaId;
-                    profileData.fullName = profileData.fullName || profileData.full_name;
-                    profileData.full_name = profileData.fullName;
-                }
                 setProfile(profileData);
 
                 if (profileData?.mdaId) {
@@ -74,12 +68,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const signIn = (authData: any) => {
         const profileData = authData.user?.profile;
-        if (profileData) {
-            profileData.mdaId = profileData.mdaId || profileData.mda_id;
-            profileData.mda_id = profileData.mdaId;
-            profileData.fullName = profileData.fullName || profileData.full_name;
-            profileData.full_name = profileData.fullName;
-        }
 
         localStorage.setItem('access_token', authData.access_token);
         localStorage.setItem('user_data', JSON.stringify(authData.user));

@@ -1,50 +1,47 @@
-import { useEffect, useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { UserProfile, MDA } from '../types/api';
 
 export const useAdmin = () => {
-    const [users, setUsers] = useState<UserProfile[]>([]);
-    const [mdas, setMDAs] = useState<MDA[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const queryClient = useQueryClient();
 
-    useEffect(() => {
-        fetchData();
-    }, []);
-
-    const fetchData = async () => {
-        console.log('useAdmin: Fetching admin data (users & MDAs)...');
-        setLoading(true);
-        try {
+    const { data, isLoading, error, refetch } = useQuery({
+        queryKey: ['adminData'],
+        queryFn: async () => {
             const [usersRes, mdasRes] = await Promise.all([
                 api.get('/users?limit=1000'),
                 api.get('/mdas')
             ]);
 
             const usersList = usersRes.data?.data || (Array.isArray(usersRes.data) ? usersRes.data : []);
-            console.log(`useAdmin: Fetched ${usersList.length} users and ${mdasRes.data?.length || 0} MDAs.`);
-
-            setUsers(usersList);
-            setMDAs(mdasRes.data || []);
-        } catch (err: any) {
-            console.error('useAdmin: Error fetching admin data:', err);
-            setError(err.response?.data?.message || err.message);
-        } finally {
-            setLoading(false);
+            return {
+                users: usersList,
+                mdas: mdasRes.data || []
+            };
         }
-    };
+    });
 
-    const createUser = async (email: string, fullName: string, role: string, mdaId: string, password?: string) => {
-        console.log('useAdmin: Invoking backend to create user...', { email, role, mdaId, hasPassword: !!password });
+    const users: UserProfile[] = data?.users || [];
+    const mdas: MDA[] = data?.mdas || [];
 
-        try {
+    const createMutation = useMutation({
+        mutationFn: async ({ email, fullName, role, mdaId, password }: { email: string; fullName: string; role: string; mdaId: string; password?: string }) => {
             await api.post('/auth/register', { email, fullName, role, mdaId, password });
-            fetchData();
-        } catch (error: any) {
-            console.error('API Error creating user:', error);
-            throw error;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['adminData'] });
+            queryClient.invalidateQueries({ queryKey: ['users'] });
         }
-    };
+    });
 
-    return { users, mdas, loading, error, createUser, refetch: fetchData };
+    return {
+        users,
+        mdas,
+        loading: isLoading,
+        error: error ? ((error as any).response?.data?.message || (error as any).message) : null,
+        createUser: (email: string, fullName: string, role: string, mdaId: string, password?: string) => 
+            createMutation.mutateAsync({ email, fullName, role, mdaId, password }),
+        refetch
+    };
 };
+
