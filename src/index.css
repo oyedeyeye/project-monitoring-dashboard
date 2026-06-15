@@ -12,6 +12,30 @@
 @theme {
   --font-sans: 'Inter', sans-serif;
   --font-serif: 'Merriweather', serif;
+
+  /* Brand + UI tokens */
+  --color-brand: #f97316;
+  --color-brand-foreground: #ffffff;
+
+  /* Dark sidebar */
+  --color-sidebar: #0b1430;
+  --color-sidebar-accent: #16203f;
+  --color-sidebar-foreground: #c7cdde;
+  --color-sidebar-muted: #8b93ab;
+
+  /* App surfaces */
+  --color-canvas: #f6f7f9;
+  --color-surface: #ffffff;
+  --color-ink: #1f2533;
+  --color-ink-muted: #6b7280;
+  --color-hairline: #eef0f4;
+
+  /* Status / chart palette (matches reference design) */
+  --color-stage-execution: #3b82f6;
+  --color-stage-procurement: #f59e0b;
+  --color-stage-planning: #22c55e;
+  --color-stage-completed: #a855f7;
+  --color-issue: #f97316;
 }
 
 body {
@@ -19,4 +43,9 @@ body {
   background-color: #f9f9f9;
   background-image: radial-gradient(#e0e0e0 1px, transparent 1px);
   background-size: 20px 20px;
+}
+
+/* Hide the dotted background within the app shell (dashboard uses a flat canvas) */
+.app-shell {
+  background-image: none;
 }
