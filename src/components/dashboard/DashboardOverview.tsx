@@ -11,12 +11,12 @@ interface DashboardOverviewProps {
     name: string;
     subtitle?: string;
     data: DashboardData;
-    /** Shown when the backend aggregate endpoint isn't available yet. */
-    isPlaceholder?: boolean;
     onRefresh?: () => void;
     isRefreshing?: boolean;
     onViewAllProjects?: () => void;
     onSelectProject?: (project: RecentProjectItem) => void;
+    onPendingApprovalsClick?: () => void;
+    isMdaOfficer?: boolean;
 }
 
 /**
@@ -28,11 +28,12 @@ const DashboardOverview = ({
     name,
     subtitle,
     data,
-    isPlaceholder = false,
     onRefresh,
     isRefreshing,
     onViewAllProjects,
     onSelectProject,
+    onPendingApprovalsClick,
+    isMdaOfficer = false,
 }: DashboardOverviewProps) => {
     const { metrics } = data;
 
@@ -40,19 +41,19 @@ const DashboardOverview = ({
         <div className="space-y-6">
             <DashboardHeader name={name} subtitle={subtitle} notificationCount={data.issues.openCount} />
 
-            {isPlaceholder && (
-                <div
-                    role="status"
-                    className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-800"
-                >
-                    Showing placeholder data — the live dashboard endpoint
-                    (<code className="font-mono text-xs">GET /admin/dashboard</code>) isn&apos;t connected yet.
-                </div>
-            )}
+
 
             {/* KPI strip */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <MetricCard value={metrics.mdaCount.toLocaleString()} label="MDAs" caption="Total Ministries" />
+            <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${
+                isMdaOfficer 
+                    ? 'lg:grid-cols-3' 
+                    : data.pendingApprovalsCount !== undefined 
+                        ? 'lg:grid-cols-5' 
+                        : 'lg:grid-cols-4'
+            }`}>
+                {!isMdaOfficer && (
+                    <MetricCard value={metrics.mdaCount.toLocaleString()} label="MDAs" caption="Total Ministries" />
+                )}
                 <MetricCard value={metrics.projectCount.toLocaleString()} label="Projects" caption="Total Projects" />
                 <MetricCard
                     value={metrics.inProgressCount.toLocaleString()}
@@ -65,26 +66,37 @@ const DashboardOverview = ({
                     label="Avg. Progress"
                     caption={`${metrics.avgProgressDelta >= 0 ? '+' : ''}${metrics.avgProgressDelta}% this month`}
                 />
+                {!isMdaOfficer && data.pendingApprovalsCount !== undefined && (
+                    <MetricCard
+                        value={data.pendingApprovalsCount.toLocaleString()}
+                        label="Pending Approvals"
+                        caption="Action required"
+                        accent={data.pendingApprovalsCount > 0}
+                        onClick={onPendingApprovalsClick}
+                    />
+                )}
             </div>
 
             {/* Charts + lists */}
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-                <div className="lg:col-span-2">
+                <div className="lg:col-span-2 min-w-0 self-start">
                     <ProjectsByStageChart data={data.stageBreakdown} />
                 </div>
-                <div className="lg:col-span-3">
+                <div className="lg:col-span-3 min-w-0">
                     <RecentProjectsList
                         projects={data.recentProjects}
                         onViewAll={onViewAllProjects}
                         onSelect={onSelectProject}
                     />
                 </div>
-                <div className="lg:col-span-2">
+                <div className={isMdaOfficer ? "lg:col-span-5 min-w-0" : "lg:col-span-2 min-w-0 self-start"}>
                     <ActiveIssuesCard issues={data.issues} />
                 </div>
-                <div className="lg:col-span-3">
-                    <ProjectsByMDACard data={data.topMdas} />
-                </div>
+                {!isMdaOfficer && (
+                    <div className="lg:col-span-3 min-w-0">
+                        <ProjectsByMDACard data={data.topMdas} />
+                    </div>
+                )}
             </div>
 
             <DashboardFooter

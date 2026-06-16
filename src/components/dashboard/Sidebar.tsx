@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
 import { LogOut, X } from 'lucide-react';
 import { getNavItems, ROLE_LABEL, type NavItem } from '../../config/navigation';
@@ -15,8 +15,13 @@ interface SidebarProps {
 
 const NavItemLink = ({ item, onNavigate }: { item: NavItem; onNavigate?: () => void }) => {
     const Icon = item.icon;
+    const location = useLocation();
     const baseClass =
         'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors';
+
+    const isChildActive = (childHref: string) => {
+        return location.pathname + location.search === childHref;
+    };
 
     if (!item.available) {
         return (
@@ -35,10 +40,42 @@ const NavItemLink = ({ item, onNavigate }: { item: NavItem; onNavigate?: () => v
         );
     }
 
+    if (item.children && item.children.length > 0) {
+        // Render parent label and children sub-items
+        return (
+            <div className="space-y-1">
+                <div className={clsx(baseClass, 'text-sidebar-foreground/70 select-none pb-1')}>
+                    <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                    <span>{item.label}</span>
+                </div>
+                <div className="pl-6 space-y-1 border-l border-sidebar-accent/40 ml-5">
+                    {item.children.map((child) => (
+                        <NavLink
+                            key={child.key}
+                            to={child.href}
+                            onClick={onNavigate}
+                            className={
+                                clsx(
+                                    'flex items-center gap-3 rounded-lg px-3 py-2 text-xs font-medium transition-colors w-full text-left',
+                                    isChildActive(child.href)
+                                        ? 'bg-brand text-brand-foreground shadow-sm'
+                                        : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-white',
+                                )
+                            }
+                        >
+                            <span>{child.label}</span>
+                        </NavLink>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
     return (
         <NavLink
             to={item.href}
             onClick={onNavigate}
+            end
             className={({ isActive }) =>
                 clsx(
                     baseClass,

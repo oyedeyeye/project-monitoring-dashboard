@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useProjects } from '../hooks/useProjects';
 import { useMdaHistory } from '../hooks/useMdaHistory';
 import Table from '../components/ui/Table';
@@ -34,7 +35,12 @@ const UserDashboard = () => {
     } = useMdaHistory();
 
     const { mdaName } = useAuth();
-    const [activeTab, setActiveTab] = useState<'projects' | 'history'>('projects');
+    const [searchParams, setSearchParams] = useSearchParams();
+    const tabParam = searchParams.get('tab');
+    const activeTab = tabParam === 'history' ? 'history' : 'projects';
+    const setActiveTab = (tab: 'projects' | 'history') => {
+        setSearchParams({ tab });
+    };
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 

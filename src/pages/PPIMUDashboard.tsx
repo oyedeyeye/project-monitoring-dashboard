@@ -1,14 +1,15 @@
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useDashboardOverview } from '../hooks/useDashboardOverview';
 import DashboardOverview from '../components/dashboard/DashboardOverview';
 import DashboardSkeleton from '../components/dashboard/DashboardSkeleton';
 
 /**
- * WEBMASTER ADMIN landing page — analytics overview of all Ondo State
- * projects across every MDA. Data is pre-aggregated by the backend
- * (see docs/DASHBOARD_ENDPOINTS.md); this page only renders it.
+ * PPIMU ADMIN landing page — analytics overview of all Ondo State
+ * projects across every MDA, including pending approvals count.
  */
-const AdminDashboard = () => {
+const PPIMUDashboard = () => {
+    const navigate = useNavigate();
     const { profile } = useAuth();
     const { data, loading, error, refetch, isRefetching } = useDashboardOverview();
 
@@ -36,8 +37,10 @@ const AdminDashboard = () => {
             data={data}
             onRefresh={refetch}
             isRefreshing={isRefetching}
+            onPendingApprovalsClick={() => navigate('/ppimu/approvals')}
+            onViewAllProjects={() => navigate('/projects')}
         />
     );
 };
 
-export default AdminDashboard;
+export default PPIMUDashboard;

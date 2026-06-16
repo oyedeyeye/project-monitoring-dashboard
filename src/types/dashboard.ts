@@ -57,6 +57,7 @@ export interface DashboardOverview {
     recentProjects: RecentProjectItem[];
     issues: IssuesSummary;
     topMdas: MdaProjectCount[];
+    pendingApprovalsCount?: number;
     /** ISO timestamp of when the aggregates were last computed. */
     lastUpdated: string;
 }

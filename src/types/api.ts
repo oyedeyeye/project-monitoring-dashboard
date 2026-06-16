@@ -20,7 +20,7 @@ export interface Project {
     status: string;
     createdAt?: string;
     // Computed or joined fields
-    mda?: string;
+    mda?: any;
 }
 
 export interface ProgressUpdate {
