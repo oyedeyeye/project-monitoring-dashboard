@@ -5,6 +5,7 @@ import {
     Building2,
     Users,
     Settings,
+    Database,
     type LucideIcon,
 } from 'lucide-react';
 import type { UserProfile } from '../types/api';
@@ -103,6 +104,7 @@ export function getNavItems(role: Role | null | undefined): NavItem[] {
         base.push(
             { key: 'mdas', label: 'MDAs', icon: Building2, href: '/mdas', available: true },
             { key: 'users', label: 'Users', icon: Users, href: '/users', available: true },
+            { key: 'power-bi', label: 'Power BI Hub', icon: Database, href: '/power-bi', available: true },
         );
     }
 
