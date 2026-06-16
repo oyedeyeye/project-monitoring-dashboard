@@ -7,8 +7,10 @@ export interface FlattenedUser {
     id: string;
     email: string;
     mdaId: string | null;
+    mdaName: string;
     fullName: string;
     role: 'WEBMASTER_ADMIN' | 'PPIMU_ADMIN' | 'MDA_OFFICER' | null;
+    lastEditActivityDate: string | null;
 }
 
 export const useUsers = (initialPage = 1, initialLimit = 25) => {
@@ -31,8 +33,10 @@ export const useUsers = (initialPage = 1, initialLimit = 25) => {
             id: u.id,
             email: u.email,
             mdaId: profileObj.mdaId || null,
+            mdaName: profileObj.mda?.name || 'N/A',
             fullName: profileObj.fullName || '',
             role: profileObj.role || null,
+            lastEditActivityDate: u.lastEditActivityDate || null,
         };
     });
 

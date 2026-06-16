@@ -14,14 +14,22 @@ interface MetricCardProps {
     caption?: string;
     /** Accent the value in the brand color (used for "In Progress"). */
     accent?: boolean;
+    /** Optional click handler for interactivity. */
+    onClick?: () => void;
 }
 
 /**
  * Single KPI tile. Reusable across all dashboards.
  */
-const MetricCard = ({ value, label, caption, accent = false }: MetricCardProps) => {
+const MetricCard = ({ value, label, caption, accent = false, onClick }: MetricCardProps) => {
     return (
-        <div className="rounded-2xl border border-hairline bg-surface p-5 shadow-sm">
+        <div 
+            onClick={onClick}
+            className={cn(
+                "rounded-2xl border border-hairline bg-surface p-5 shadow-sm",
+                onClick ? "cursor-pointer hover:border-brand/40 hover:shadow-md transition-all active:scale-[0.98]" : ""
+            )}
+        >
             <p className={cn('text-3xl font-bold tracking-tight', accent ? 'text-brand' : 'text-ink')}>
                 {value}
             </p>

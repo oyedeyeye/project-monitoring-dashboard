@@ -2,7 +2,6 @@ import {
     LayoutDashboard,
     FolderKanban,
     AlertTriangle,
-    FileText,
     Building2,
     Users,
     Settings,
@@ -11,6 +10,13 @@ import {
 import type { UserProfile } from '../types/api';
 
 type Role = NonNullable<UserProfile['role']>;
+
+export interface NavSubItem {
+    key: string;
+    label: string;
+    href: string;
+    available: boolean;
+}
 
 export interface NavItem {
     /** Stable key */
@@ -22,6 +28,7 @@ export interface NavItem {
     href: string;
     /** Whether a route currently exists for this item. */
     available: boolean;
+    children?: NavSubItem[];
 }
 
 /**
@@ -37,7 +44,7 @@ export const DASHBOARD_ROUTE: Record<Role, string> = {
 export const ROLE_LABEL: Record<Role, string> = {
     WEBMASTER_ADMIN: 'Admin',
     PPIMU_ADMIN: 'PPIMU Admin',
-    MDA_OFFICER: 'Agency Staff',
+    MDA_OFFICER: 'MDA Officer',
 };
 
 /**
@@ -50,16 +57,52 @@ export function getNavItems(role: Role | null | undefined): NavItem[] {
 
     const base: NavItem[] = [
         { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: dashboardHref, available: true },
-        { key: 'projects', label: 'Projects', icon: FolderKanban, href: '/projects', available: false },
-        { key: 'issues', label: 'Issues & Risks', icon: AlertTriangle, href: '/issues', available: false },
-        { key: 'reports', label: 'Reports', icon: FileText, href: '/reports', available: false },
     ];
+
+    if (role === 'PPIMU_ADMIN') {
+        base.push({
+            key: 'projects',
+            label: 'Projects',
+            icon: FolderKanban,
+            href: '/projects',
+            available: true,
+            children: [
+                { key: 'projects-approvals', label: 'Current approvals', href: '/ppimu/approvals', available: true },
+                { key: 'projects-list', label: 'All Projects', href: '/projects', available: true },
+            ],
+        });
+    } else if (role === 'MDA_OFFICER') {
+        base.push({
+            key: 'projects',
+            label: 'Projects',
+            icon: FolderKanban,
+            href: '/mda/projects',
+            available: true,
+            children: [
+                { key: 'projects-my', label: 'My Projects', href: '/mda/projects', available: true },
+                { key: 'projects-history', label: 'History', href: '/mda/projects?tab=history', available: true },
+            ],
+        });
+    } else {
+        base.push({
+            key: 'projects',
+            label: 'Projects',
+            icon: FolderKanban,
+            href: '/projects',
+            available: true,
+        });
+    }
+
+    base.push(
+        { key: 'issues', label: 'Issues & Risks', icon: AlertTriangle, href: '/issues', available: true },
+        // { key: 'reports', label: 'Reports', icon: FileText, href: '/reports', available: false },
+    );
 
     // Admins additionally manage MDAs and Users.
     if (role === 'WEBMASTER_ADMIN' || role === 'PPIMU_ADMIN') {
         base.push(
-            { key: 'mdas', label: 'MDAs', icon: Building2, href: '/mdas', available: false },
-            { key: 'users', label: 'Users', icon: Users, href: '/users', available: false },
+            { key: 'mdas', label: 'MDAs', icon: Building2, href: '/mdas', available: true },
+            { key: 'users', label: 'Users', icon: Users, href: '/users', available: true },
         );
     }
 

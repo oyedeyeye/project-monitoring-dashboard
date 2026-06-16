@@ -4,25 +4,30 @@ import { api } from '../lib/api';
 import { Project } from '../types/api';
 import { useAuth } from '../context/AuthContext';
 
-export const useProjects = (mdaIdOverride?: string | null, initialPage = 1, initialLimit = 25) => {
+export const useProjects = (mdaIdOverride?: string | null, initialPage = 1, initialLimit = 25, initialStatus = '') => {
     const { profile } = useAuth();
     const [page, setPage] = useState(initialPage);
     const [limit, setLimit] = useState(initialLimit);
+    const [status, setStatus] = useState(initialStatus);
 
     const targetMdaId = mdaIdOverride || profile?.mdaId;
     const isWebmaster = profile?.role === 'WEBMASTER_ADMIN';
+    const isPpimu = profile?.role === 'PPIMU_ADMIN';
 
     const { data, isLoading, error, refetch } = useQuery({
-        queryKey: ['projects', { targetMdaId, isWebmaster, page, limit }],
+        queryKey: ['projects', { targetMdaId, isWebmaster, isPpimu, page, limit, status }],
         queryFn: async () => {
             let url = `/projects?page=${page}&limit=${limit}`;
-            if (targetMdaId && isWebmaster) {
+            if (targetMdaId && (isWebmaster || isPpimu)) {
                 url += `&mdaId=${targetMdaId}`;
+            }
+            if (status) {
+                url += `&status=${status}`;
             }
             const response = await api.get(url);
             return response.data;
         },
-        enabled: !!(targetMdaId || isWebmaster),
+        enabled: !!(targetMdaId || isWebmaster || isPpimu),
     });
 
     const projects: Project[] = data?.data || [];
@@ -41,6 +46,8 @@ export const useProjects = (mdaIdOverride?: string | null, initialPage = 1, init
         setPage,
         limit,
         setLimit,
+        status,
+        setStatus,
         loading: isLoading,
         error: error ? ((error as any).response?.data?.message || (error as any).message) : null,
         refetch

@@ -1,18 +1,20 @@
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useDashboardOverview } from '../hooks/useDashboardOverview';
 import DashboardOverview from '../components/dashboard/DashboardOverview';
 import DashboardSkeleton from '../components/dashboard/DashboardSkeleton';
 
 /**
- * WEBMASTER ADMIN landing page — analytics overview of all Ondo State
- * projects across every MDA. Data is pre-aggregated by the backend
- * (see docs/DASHBOARD_ENDPOINTS.md); this page only renders it.
+ * MDA Officer landing page — analytics overview of projects
+ * within their specific MDA.
  */
-const AdminDashboard = () => {
-    const { profile } = useAuth();
+const MDADashboard = () => {
+    const navigate = useNavigate();
+    const { profile, mdaName } = useAuth();
     const { data, loading, error, refetch, isRefetching } = useDashboardOverview();
 
-    const firstName = profile?.fullName?.split(' ')[0] || 'Admin';
+    const firstName = profile?.fullName?.split(' ')[0] || 'Officer';
+    const subtitle = mdaName ? `Monitoring and analytics for ${mdaName}` : undefined;
 
     if (loading) {
         return <DashboardSkeleton />;
@@ -33,11 +35,14 @@ const AdminDashboard = () => {
     return (
         <DashboardOverview
             name={firstName}
+            subtitle={subtitle}
             data={data}
+            isMdaOfficer={true}
             onRefresh={refetch}
             isRefreshing={isRefetching}
+            onViewAllProjects={() => navigate('/mda/projects')}
         />
     );
 };
 
-export default AdminDashboard;
+export default MDADashboard;
