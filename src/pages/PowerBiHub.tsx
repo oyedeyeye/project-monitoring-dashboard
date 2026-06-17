@@ -117,6 +117,8 @@ const PowerBiHub = () => {
           }))
         : [];
 
+    const [activeTab, setActiveTab] = useState<'preview' | 'guide'>('preview');
+
     return (
         <div className="min-h-screen bg-gray-50 p-6">
             <div className="max-w-7xl mx-auto space-y-6">
@@ -136,10 +138,34 @@ const PowerBiHub = () => {
                                 Power BI Developer Hub
                             </h1>
                             <p className="text-gray-500 text-sm mt-0.5">
-                                Inspect database schemas, preview data samples, and export CSV files.
+                                Inspect database schemas, preview data samples, and access live integration endpoints.
                             </p>
                         </div>
                     </div>
+                </div>
+
+                {/* Tabs */}
+                <div className="flex items-center gap-2 border-b border-gray-200">
+                    <button
+                        onClick={() => setActiveTab('preview')}
+                        className={`px-4 py-2 text-sm font-semibold border-b-2 transition-colors ${
+                            activeTab === 'preview'
+                                ? 'border-brand text-brand'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        }`}
+                    >
+                        Schema & Data Preview
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('guide')}
+                        className={`px-4 py-2 text-sm font-semibold border-b-2 transition-colors ${
+                            activeTab === 'guide'
+                                ? 'border-brand text-brand'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        }`}
+                    >
+                        Integration Guide
+                    </button>
                 </div>
 
                 {error && (
@@ -148,7 +174,59 @@ const PowerBiHub = () => {
                     </div>
                 )}
 
-                {loadingTables ? (
+                {activeTab === 'guide' && (
+                    <div className="space-y-6">
+                        <Card>
+                            <h2 className="text-lg font-bold text-gray-900 mb-4">Live Data Ingestion API</h2>
+                            <p className="text-sm text-gray-600 mb-6">
+                                Power BI can ingest full table data dynamically by connecting to the backend's paginated JSON endpoint. 
+                                This endpoint requires a secure API Key to authenticate the request, bypassing the standard dashboard login.
+                            </p>
+
+                            <div className="space-y-4">
+                                <div>
+                                    <h3 className="text-sm font-bold text-gray-700 mb-2">Endpoint Details</h3>
+                                    <div className="bg-gray-900 text-gray-100 p-4 rounded-xl font-mono text-sm overflow-x-auto">
+                                        <p><span className="text-blue-400">GET</span> {api.defaults.baseURL || window.location.origin}/power-bi/tables/<span className="text-yellow-400">[tableName]</span>/data</p>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h3 className="text-sm font-bold text-gray-700 mb-2">Required Headers</h3>
+                                    <div className="bg-gray-900 text-gray-100 p-4 rounded-xl font-mono text-sm overflow-x-auto">
+                                        <p>x-api-key: <span className="text-green-400">pb_live_8f3a9d2b1c4e7f6a5d4c3b2a1e0f9d8c</span></p>
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-2">
+                                        * Note: The API key is statically configured in the backend environment variables. Do not expose it publicly.
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <h3 className="text-sm font-bold text-gray-700 mb-2">Pagination Parameters (Optional)</h3>
+                                    <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                                        <li><code className="bg-gray-100 px-1 rounded">page</code>: Page number to retrieve (default: 1)</li>
+                                        <li><code className="bg-gray-100 px-1 rounded">limit</code>: Number of records per page (default: 1000)</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </Card>
+
+                        <Card>
+                            <h2 className="text-lg font-bold text-gray-900 mb-4">How to Configure Power BI Desktop</h2>
+                            <ol className="list-decimal list-inside text-sm text-gray-700 space-y-3">
+                                <li>Open Power BI Desktop and select <strong>Get Data</strong> &gt; <strong>Web</strong>.</li>
+                                <li>Choose the <strong>Advanced</strong> radio button.</li>
+                                <li>In the <strong>URL parts</strong>, enter the endpoint URL (e.g., <code className="bg-gray-100 px-1 rounded">{api.defaults.baseURL}/power-bi/tables/Project/data</code>).</li>
+                                <li>Under <strong>HTTP request header parameters</strong>, type <code className="bg-gray-100 px-1 rounded">x-api-key</code> in the key box and paste the secret API key in the value box.</li>
+                                <li>Click <strong>OK</strong>. Power BI will execute the query and open Power Query Editor.</li>
+                                <li>In Power Query Editor, click on the <code className="bg-gray-100 px-1 rounded">Record</code> or <code className="bg-gray-100 px-1 rounded">List</code> returned to expand the JSON <code className="bg-gray-100 px-1 rounded">data</code> array into rows and columns.</li>
+                            </ol>
+                        </Card>
+                    </div>
+                )}
+
+                {activeTab === 'preview' && (
+                    loadingTables ? (
                     <div className="w-full h-64 flex items-center justify-center text-gray-500">
                         Loading schemas and structure...
                     </div>
@@ -247,7 +325,7 @@ const PowerBiHub = () => {
                             </div>
                         )}
                     </div>
-                )}
+                ))}
             </div>
         </div>
     );
