@@ -126,9 +126,9 @@ const PowerBiHub = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
                         <Link
-                            to="/"
+                            to="/admin"
                             className="p-2 bg-white rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors shadow-sm"
-                            title="Back to login/dashboard"
+                            title="Back to Admin Dashboard"
                         >
                             <ArrowLeft className="h-5 w-5" />
                         </Link>

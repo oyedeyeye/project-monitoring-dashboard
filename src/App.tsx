@@ -27,8 +27,9 @@ function App() {
                     <Route path="/reset-password" element={<ResetPassword />} />
                     <Route path="/setup-password" element={<ResetPassword />} />
                     <Route path="/unauthorized" element={<Unauthorized />} />
-                    <Route path="/power-bi" element={<PowerBiHub />} />
-
+                    <Route element={<ProtectedRoute allowedRoles={['WEBMASTER_ADMIN']} />}>
+                        <Route path="/power-bi" element={<PowerBiHub />} />
+                    </Route>
                     {/* Protected Routes */}
                     <Route element={<DashboardLayout />}>
                         <Route element={<ProtectedRoute allowedRoles={['MDA_OFFICER']} />}>
