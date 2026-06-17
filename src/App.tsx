@@ -12,6 +12,7 @@ import Unauthorized from './pages/Unauthorized';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import Projects from './pages/Projects';
+import PowerBiHub from './pages/PowerBiHub';
 import Mdas from './pages/Mdas';
 import Users from './pages/Users';
 import Issues from './pages/Issues';
@@ -26,6 +27,7 @@ function App() {
                     <Route path="/reset-password" element={<ResetPassword />} />
                     <Route path="/setup-password" element={<ResetPassword />} />
                     <Route path="/unauthorized" element={<Unauthorized />} />
+                    <Route path="/power-bi" element={<PowerBiHub />} />
 
                     {/* Protected Routes */}
                     <Route element={<DashboardLayout />}>
