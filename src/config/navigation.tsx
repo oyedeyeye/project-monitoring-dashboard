@@ -104,6 +104,11 @@ export function getNavItems(role: Role | null | undefined): NavItem[] {
         base.push(
             { key: 'mdas', label: 'MDAs', icon: Building2, href: '/mdas', available: true },
             { key: 'users', label: 'Users', icon: Users, href: '/users', available: true },
+        );
+    }
+
+    if (role === 'WEBMASTER_ADMIN') {
+        base.push(
             { key: 'power-bi', label: 'Power BI Hub', icon: Database, href: '/power-bi', available: true },
         );
     }
