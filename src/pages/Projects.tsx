@@ -11,6 +11,27 @@ import ProjectDetailsModal from '../components/ProjectDetailsModal';
 import { Project } from '../types/api';
 import { Search } from 'lucide-react';
 
+const ONDO_LGAS = [
+    'Akoko North-East',
+    'Akoko North-West',
+    'Akoko South-East',
+    'Akoko South-West',
+    'Akure North',
+    'Akure South',
+    'Ese Odo',
+    'Idanre',
+    'Ifedore',
+    'Ilaje',
+    'Ile Oluji/Okeigbo',
+    'Irele',
+    'Odigbo',
+    'Okitipupa',
+    'Ondo East',
+    'Ondo West',
+    'Ose',
+    'Owo'
+];
+
 const Projects = () => {
     const { profile } = useAuth();
     const { mdas } = useAdmin();
@@ -18,6 +39,7 @@ const Projects = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const mdaFilter = searchParams.get('mdaId') || '';
     const statusFilter = searchParams.get('status') || '';
+    const lgaFilter = searchParams.get('lga') || '';
     const pageParam = parseInt(searchParams.get('page') || '1', 10);
 
     const {
@@ -27,10 +49,11 @@ const Projects = () => {
         setPage,
         limit,
         setStatus,
+        setLga,
         loading,
         error,
         refetch,
-    } = useProjects(mdaFilter || null, pageParam, 25, statusFilter);
+    } = useProjects(mdaFilter || null, pageParam, 25, statusFilter, lgaFilter);
 
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -66,6 +89,19 @@ const Projects = () => {
         setPage(1);
     };
 
+    const handleLgaChange = (lgaVal: string) => {
+        const newParams = new URLSearchParams(searchParams);
+        if (lgaVal) {
+            newParams.set('lga', lgaVal);
+        } else {
+            newParams.delete('lga');
+        }
+        newParams.set('page', '1');
+        setSearchParams(newParams);
+        setLga(lgaVal);
+        setPage(1);
+    };
+
     const handlePageChange = (newPage: number) => {
         const newParams = new URLSearchParams(searchParams);
         newParams.set('page', newPage.toString());
@@ -75,9 +111,9 @@ const Projects = () => {
 
     // Filter local projects if searchTerm exists (in addition to API limits)
     const filteredProjects = projects.filter(p => 
-        p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.contractor?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.locationText.toLowerCase().includes(searchTerm.toLowerCase())
+        (p.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (p.contractor || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (p.locationText || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const columns = [
@@ -146,7 +182,7 @@ const Projects = () => {
             {/* Filters Card */}
             <Card className="p-4">
                 <div className="flex flex-col md:flex-row gap-4 items-end justify-between">
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 flex-1 w-full">
+                    <div className={`grid grid-cols-1 sm:grid-cols-2 ${isAdmin ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-4 flex-1 w-full`}>
                         {/* Search Input */}
                         <div className="flex flex-col gap-1.5">
                             <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Search</label>
@@ -175,6 +211,23 @@ const Projects = () => {
                                 <option value="Completed">Completed</option>
                                 <option value="Stalled">Stalled</option>
                                 <option value="Not Started">Not Started</option>
+                            </select>
+                        </div>
+
+                        {/* LGA Filter */}
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">LGA</label>
+                            <select
+                                value={lgaFilter}
+                                onChange={(e) => handleLgaChange(e.target.value)}
+                                className="px-3 py-2 w-full text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition-all shadow-sm bg-white"
+                            >
+                                <option value="">All LGAs</option>
+                                {ONDO_LGAS.map((lgaName) => (
+                                    <option key={lgaName} value={lgaName}>
+                                        {lgaName}
+                                    </option>
+                                ))}
                             </select>
                         </div>
 

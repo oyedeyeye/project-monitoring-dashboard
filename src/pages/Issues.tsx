@@ -140,7 +140,7 @@ const Issues = () => {
         issue.issueItem.toLowerCase().includes(searchTerm.toLowerCase()) ||
         issue.issueCategory.toLowerCase().includes(searchTerm.toLowerCase()) ||
         issue.owner.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (issue as any).project?.title?.toLowerCase().includes(searchTerm.toLowerCase())
+        ((issue as any).project?.title || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const columns = [
