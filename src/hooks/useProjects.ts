@@ -4,18 +4,19 @@ import { api } from '../lib/api';
 import { Project } from '../types/api';
 import { useAuth } from '../context/AuthContext';
 
-export const useProjects = (mdaIdOverride?: string | null, initialPage = 1, initialLimit = 25, initialStatus = '') => {
+export const useProjects = (mdaIdOverride?: string | null, initialPage = 1, initialLimit = 25, initialStatus = '', initialLga = '') => {
     const { profile } = useAuth();
     const [page, setPage] = useState(initialPage);
     const [limit, setLimit] = useState(initialLimit);
     const [status, setStatus] = useState(initialStatus);
+    const [lga, setLga] = useState(initialLga);
 
     const targetMdaId = mdaIdOverride || profile?.mdaId;
     const isWebmaster = profile?.role === 'WEBMASTER_ADMIN';
     const isPpimu = profile?.role === 'PPIMU_ADMIN';
 
     const { data, isLoading, error, refetch } = useQuery({
-        queryKey: ['projects', { targetMdaId, isWebmaster, isPpimu, page, limit, status }],
+        queryKey: ['projects', { targetMdaId, isWebmaster, isPpimu, page, limit, status, lga }],
         queryFn: async () => {
             let url = `/projects?page=${page}&limit=${limit}`;
             if (targetMdaId && (isWebmaster || isPpimu)) {
@@ -23,6 +24,9 @@ export const useProjects = (mdaIdOverride?: string | null, initialPage = 1, init
             }
             if (status) {
                 url += `&status=${status}`;
+            }
+            if (lga) {
+                url += `&lga=${lga}`;
             }
             const response = await api.get(url);
             return response.data;
@@ -48,6 +52,8 @@ export const useProjects = (mdaIdOverride?: string | null, initialPage = 1, init
         setLimit,
         status,
         setStatus,
+        lga,
+        setLga,
         loading: isLoading,
         error: error ? ((error as any).response?.data?.message || (error as any).message) : null,
         refetch
