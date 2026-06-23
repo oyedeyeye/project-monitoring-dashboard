@@ -316,6 +316,33 @@ const Reports = () => {
                     body { background: white !important; padding: 0 !important; margin: 0 !important; }
                     .main-content-layout { padding: 0 !important; }
                     .shadow-sm, .shadow-md, .shadow-lg { box-shadow: none !important; border: 1px solid #e5e7eb !important; }
+                    
+                    /* Hide sidebar, navigation elements and headers */
+                    aside, header, nav, [role="dialog"], [aria-label="Navigation menu"] {
+                        display: none !important;
+                    }
+                    
+                    /* Reset scrollable containers to allow natural multi-page flow and hide scrollbars */
+                    html, body, #root, .app-shell, .app-shell > div, main {
+                        overflow: visible !important;
+                        height: auto !important;
+                        min-height: 0 !important;
+                        max-height: none !important;
+                        display: block !important;
+                        position: static !important;
+                    }
+                    
+                    main {
+                        padding: 0 !important;
+                        margin: 0 !important;
+                        width: 100% !important;
+                    }
+                    
+                    main > div {
+                        padding: 0 !important;
+                        max-width: 100% !important;
+                        margin: 0 !important;
+                    }
                 }
                 @media screen {
                     .print-only { display: none !important; }
