@@ -6,6 +6,7 @@ import {
     Users,
     Settings,
     Database,
+    FileText,
     type LucideIcon,
 } from 'lucide-react';
 import type { UserProfile } from '../types/api';
@@ -96,7 +97,6 @@ export function getNavItems(role: Role | null | undefined): NavItem[] {
 
     base.push(
         { key: 'issues', label: 'Issues & Risks', icon: AlertTriangle, href: '/issues', available: true },
-        // { key: 'reports', label: 'Reports', icon: FileText, href: '/reports', available: false },
     );
 
     // Admins additionally manage MDAs and Users.
@@ -109,6 +109,7 @@ export function getNavItems(role: Role | null | undefined): NavItem[] {
 
     if (role === 'WEBMASTER_ADMIN') {
         base.push(
+            { key: 'reports', label: 'Reports', icon: FileText, href: '/reports', available: true },
             { key: 'power-bi', label: 'Power BI Hub', icon: Database, href: '/power-bi', available: true },
         );
     }
