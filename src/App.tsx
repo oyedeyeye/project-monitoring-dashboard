@@ -16,6 +16,7 @@ import PowerBiHub from './pages/PowerBiHub';
 import Mdas from './pages/Mdas';
 import Users from './pages/Users';
 import Issues from './pages/Issues';
+import Reports from './pages/Reports';
 
 function App() {
     return (
@@ -44,6 +45,7 @@ function App() {
 
                         <Route element={<ProtectedRoute allowedRoles={['WEBMASTER_ADMIN']} />}>
                             <Route path="/admin" element={<AdminDashboard />} />
+                            <Route path="/reports" element={<Reports />} />
                         </Route>
 
                         <Route element={<ProtectedRoute allowedRoles={['WEBMASTER_ADMIN', 'PPIMU_ADMIN', 'MDA_OFFICER']} />}>

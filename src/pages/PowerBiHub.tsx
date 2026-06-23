@@ -20,6 +20,11 @@ interface TableStructure {
 }
 
 const PowerBiHub = () => {
+    const getBaseUrlClean = () => {
+        const base = api.defaults.baseURL || window.location.origin;
+        return base.endsWith('/') ? base.slice(0, -1) : base;
+    };
+
     const [tables, setTables] = useState<TableStructure[]>([]);
     const [selectedTable, setSelectedTable] = useState<string>('');
     const [sampleData, setSampleData] = useState<any[]>([]);
@@ -69,7 +74,7 @@ const PowerBiHub = () => {
 
     const handleExport = () => {
         if (!selectedTable) return;
-        const url = `${api.defaults.baseURL || ''}/power-bi/tables/${selectedTable}/export`;
+        const url = `${getBaseUrlClean()}/power-bi/tables/${selectedTable}/export`;
         window.open(url, '_blank');
     };
 
@@ -187,7 +192,7 @@ const PowerBiHub = () => {
                                 <div>
                                     <h3 className="text-sm font-bold text-gray-700 mb-2">Endpoint Details</h3>
                                     <div className="bg-gray-900 text-gray-100 p-4 rounded-xl font-mono text-sm overflow-x-auto">
-                                        <p><span className="text-blue-400">GET</span> {api.defaults.baseURL || window.location.origin}/power-bi/tables/<span className="text-yellow-400">[tableName]</span>/data</p>
+                                        <p><span className="text-blue-400">GET</span> {getBaseUrlClean()}/power-bi/tables/<span className="text-yellow-400">[tableName]</span>/data</p>
                                     </div>
                                 </div>
 
@@ -216,7 +221,7 @@ const PowerBiHub = () => {
                             <ol className="list-decimal list-inside text-sm text-gray-700 space-y-3">
                                 <li>Open Power BI Desktop and select <strong>Get Data</strong> &gt; <strong>Web</strong>.</li>
                                 <li>Choose the <strong>Advanced</strong> radio button.</li>
-                                <li>In the <strong>URL parts</strong>, enter the endpoint URL (e.g., <code className="bg-gray-100 px-1 rounded">{api.defaults.baseURL}/power-bi/tables/Project/data</code>).</li>
+                                <li>In the <strong>URL parts</strong>, enter the endpoint URL (e.g., <code className="bg-gray-100 px-1 rounded">{getBaseUrlClean()}/power-bi/tables/Project/data</code>).</li>
                                 <li>Under <strong>HTTP request header parameters</strong>, type <code className="bg-gray-100 px-1 rounded">x-api-key</code> in the key box and paste the secret API key in the value box.</li>
                                 <li>Click <strong>OK</strong>. Power BI will execute the query and open Power Query Editor.</li>
                                 <li>In Power Query Editor, click on the <code className="bg-gray-100 px-1 rounded">Record</code> or <code className="bg-gray-100 px-1 rounded">List</code> returned to expand the JSON <code className="bg-gray-100 px-1 rounded">data</code> array into rows and columns.</li>
