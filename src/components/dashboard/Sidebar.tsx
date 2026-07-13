@@ -105,7 +105,7 @@ const SidebarContent = ({ profile, onSignOut, onNavigate }: {
             {/* Logo */}
             <div className="flex items-center gap-2 px-6 py-6">
                 <img
-                    src="/ONDO STATE Logo.png"
+                    src={`${import.meta.env.BASE_URL}ONDO STATE Logo.png`}
                     alt="Ondo State"
                     className="h-9 w-auto object-contain"
                 />

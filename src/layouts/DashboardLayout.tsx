@@ -34,7 +34,7 @@ const DashboardLayout = () => {
                     >
                         <Menu className="h-6 w-6" />
                     </button>
-                    <img src="/ONDO STATE Logo.png" alt="Ondo State" className="h-7 w-auto object-contain" />
+                    <img src={`${import.meta.env.BASE_URL}ONDO STATE Logo.png`} alt="Ondo State" className="h-7 w-auto object-contain" />
                 </header>
 
                 <main className="flex-1 overflow-y-auto">

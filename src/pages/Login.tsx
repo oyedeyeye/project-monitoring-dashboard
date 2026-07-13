@@ -56,7 +56,7 @@ const Login = () => {
 
                 {/* Top Logo */}
                 <img
-                    src="/ONDO STATE Logo.png"
+                    src={`${import.meta.env.BASE_URL}ONDO STATE Logo.png`}
                     alt="Ondo State Logo"
                     className="max-w-[180px] h-auto mb-5 object-contain"
                 />
@@ -124,7 +124,7 @@ const Login = () => {
 
                 {/* Bottom Logo */}
                 <img
-                    src="/PPIMU Logo.png"
+                    src={`${import.meta.env.BASE_URL}PPIMU Logo.png`}
                     alt="PPIMU Logo"
                     className="mt-5 max-w-[120px] h-auto object-contain"
                 />
