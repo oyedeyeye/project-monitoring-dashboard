@@ -21,7 +21,7 @@ import Reports from './pages/Reports';
 function App() {
     return (
         <AuthProvider>
-            <BrowserRouter>
+            <BrowserRouter basename="/project-monitoring">
                 <Routes>
                     <Route path="/" element={<Login />} />
                     <Route path="/forgot-password" element={<ForgotPassword />} />
