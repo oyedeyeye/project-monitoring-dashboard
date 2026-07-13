@@ -6,6 +6,9 @@ import Button from './ui/Button';
 import UpdateModal from './UpdateModal';
 import { useReports } from '../hooks/useReports';
 import ConfirmModal from './ui/ConfirmModal';
+import EditProjectModal from './EditProjectModal';
+import { useAuth } from '../context/AuthContext';
+import { Pencil, FileText, Briefcase, AlertTriangle } from 'lucide-react';
 
 interface ProjectDetailsModalProps {
     isOpen: boolean;
@@ -19,9 +22,12 @@ interface ProjectDetailsModalProps {
 const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isApproverView, onProgressUpdate }: ProjectDetailsModalProps) => {
     const { updates, issues, loading, refetch } = useProjectDetails(project.projectId);
     const { approveReport } = useReports();
+    const { profile } = useAuth();
+    const isWebmasterView = profile?.role === 'WEBMASTER_ADMIN';
     const [activeTab, setActiveTab] = useState<'overview' | 'history'>('overview');
 
     const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+    const [isEditProjectModalOpen, setIsEditProjectModalOpen] = useState(false);
     const [updateToEdit, setUpdateToEdit] = useState<ProgressUpdate | null>(null);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
 
@@ -98,7 +104,10 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isAppro
 
             {latestUpdate && (
                 <div className="mt-4 border-t pt-4">
-                    <h4 className="font-medium text-gray-800 mb-2">Update Notes (Submitted by Officer)</h4>
+                    <h4 className="font-medium text-gray-800 mb-2 flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-gray-500" />
+                        Update Notes (Submitted by Officer)
+                    </h4>
                     <div className="bg-orange-50/50 border border-orange-100 p-4 rounded-lg space-y-3">
                         <div>
                             <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">Key Progress Update</p>
@@ -122,7 +131,23 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isAppro
             )}
 
             <div className="mt-4 border-t pt-4">
-                <h4 className="font-medium text-gray-800 mb-2">Project Info</h4>
+                <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-medium text-gray-800 flex items-center gap-2">
+                        <Briefcase className="w-4 h-4 text-gray-500" />
+                        Project Info
+                    </h4>
+                    {isWebmasterView && (
+                        <button
+                            type="button"
+                            onClick={() => setIsEditProjectModalOpen(true)}
+                            className="inline-flex items-center justify-center gap-2.5 px-6 h-[50px] rounded-[14px] border-2 border-blue-600 text-blue-600 font-medium text-[19px] bg-transparent hover:bg-blue-50 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition-all"
+                            aria-label="Edit Project"
+                        >
+                            <Pencil className="w-[22px] h-[22px]" />
+                            <span>Edit Project</span>
+                        </button>
+                    )}
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-4 text-sm text-gray-600">
                     <p><span className="font-semibold w-32 inline-block text-gray-700">Sen. District:</span> {project.senatorialDistrict || 'N/A'}</p>
                     <p><span className="font-semibold w-32 inline-block text-gray-700">Start Date:</span> {project.startDate ? new Date(project.startDate).toLocaleDateString() : 'N/A'}</p>
@@ -134,7 +159,10 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isAppro
 
             {/* Merged Issues List under Overview Tab */}
             <div className="mt-4 border-t pt-4">
-                <h4 className="font-medium text-gray-800 mb-2">Active Issues & Risks</h4>
+                <h4 className="font-medium text-gray-800 mb-2 flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-orange-500" />
+                    Active Issues & Risks
+                </h4>
                 <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
                     {!issues.length ? (
                         <p className="text-gray-500 italic text-sm">No active issues reported for this project.</p>
@@ -310,6 +338,19 @@ const ProjectDetailsModal = ({ isOpen, onClose, project, selectedUpdate, isAppro
                 message="Are you sure you want to approve this progress update?"
                 confirmText="Approve"
             />
+
+            {isEditProjectModalOpen && (
+                <EditProjectModal
+                    isOpen={isEditProjectModalOpen}
+                    onClose={() => setIsEditProjectModalOpen(false)}
+                    project={project}
+                    onSuccess={() => {
+                        setIsEditProjectModalOpen(false);
+                        if (onProgressUpdate) onProgressUpdate(); // trigger parent refresh
+                        onClose(); // Alternatively, close the project details modal to show updated data on reopening
+                    }}
+                />
+            )}
         </React.Fragment>
     );
 };

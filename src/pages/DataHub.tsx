@@ -4,8 +4,10 @@ import Card from '../components/ui/Card';
 import Table from '../components/ui/Table';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
-import { Database, Download, Table2, Info, ArrowLeft } from 'lucide-react';
+import { Database, Download, Table2, Info, ArrowLeft, Upload } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import ImportProjectsModal from '../components/ImportProjectsModal';
 
 interface ColumnDefinition {
     name: string;
@@ -19,7 +21,7 @@ interface TableStructure {
     columns: ColumnDefinition[];
 }
 
-const PowerBiHub = () => {
+const DataHub = () => {
     const getBaseUrlClean = () => {
         const base = api.defaults.baseURL || window.location.origin;
         return base.endsWith('/') ? base.slice(0, -1) : base;
@@ -31,6 +33,9 @@ const PowerBiHub = () => {
     const [loadingTables, setLoadingTables] = useState<boolean>(true);
     const [loadingSample, setLoadingSample] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const { profile } = useAuth();
+    const isWebmaster = profile?.role === 'WEBMASTER_ADMIN';
 
     useEffect(() => {
         const fetchTables = async () => {
@@ -140,12 +145,20 @@ const PowerBiHub = () => {
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                                 <Database className="h-6 w-6 text-brand" />
-                                Power BI Developer Hub
+                                Data Hub
                             </h1>
                             <p className="text-gray-500 text-sm mt-0.5">
                                 Inspect database schemas, preview data samples, and access live integration endpoints.
                             </p>
                         </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+                        {isWebmaster && (
+                            <Button onClick={() => setIsImportModalOpen(true)} variant="primary" className="flex items-center gap-2">
+                                <Upload className="w-4 h-4" />
+                                Import Projects (CSV)
+                            </Button>
+                        )}
                     </div>
                 </div>
 
@@ -332,8 +345,19 @@ const PowerBiHub = () => {
                     </div>
                 ))}
             </div>
+
+            {isImportModalOpen && (
+                <ImportProjectsModal
+                    isOpen={isImportModalOpen}
+                    onClose={() => setIsImportModalOpen(false)}
+                    onSuccess={() => {
+                        setIsImportModalOpen(false);
+                        // Optional: trigger table refresh if needed
+                    }}
+                />
+            )}
         </div>
     );
 };
 
-export default PowerBiHub;
+export default DataHub;

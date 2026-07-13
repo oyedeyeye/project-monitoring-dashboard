@@ -12,7 +12,7 @@ import Unauthorized from './pages/Unauthorized';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import Projects from './pages/Projects';
-import PowerBiHub from './pages/PowerBiHub';
+import DataHub from './pages/DataHub';
 import Mdas from './pages/Mdas';
 import Users from './pages/Users';
 import Issues from './pages/Issues';
@@ -29,7 +29,7 @@ function App() {
                     <Route path="/setup-password" element={<ResetPassword />} />
                     <Route path="/unauthorized" element={<Unauthorized />} />
                     <Route element={<ProtectedRoute allowedRoles={['WEBMASTER_ADMIN']} />}>
-                        <Route path="/power-bi" element={<PowerBiHub />} />
+                        <Route path="/data-hub" element={<DataHub />} />
                     </Route>
                     {/* Protected Routes */}
                     <Route element={<DashboardLayout />}>
