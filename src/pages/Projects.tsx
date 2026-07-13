@@ -174,9 +174,11 @@ const Projects = () => {
                         {isAdmin ? 'View and track development projects across all state MDAs.' : 'View and track projects assigned to your MDA.'}
                     </p>
                 </div>
-                <Button onClick={() => refetch()} variant="ghost" size="sm" className="self-start sm:self-auto">
-                    Refresh
-                </Button>
+                <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+                    <Button onClick={() => refetch()} variant="ghost" size="sm">
+                        Refresh
+                    </Button>
+                </div>
             </div>
 
             {/* Filters Card */}

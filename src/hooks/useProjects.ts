@@ -60,3 +60,16 @@ export const useProjects = (mdaIdOverride?: string | null, initialPage = 1, init
     };
 };
 
+export const updateProject = async (projectId: string, data: Partial<Project>) => {
+    const response = await api.patch(`/projects/${projectId}`, data);
+    return response.data;
+};
+
+export const uploadCsv = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post('/projects/import/csv', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data;
+};

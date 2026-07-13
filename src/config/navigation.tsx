@@ -110,7 +110,7 @@ export function getNavItems(role: Role | null | undefined): NavItem[] {
     if (role === 'WEBMASTER_ADMIN') {
         base.push(
             { key: 'reports', label: 'Reports', icon: FileText, href: '/reports', available: true },
-            { key: 'power-bi', label: 'Power BI Hub', icon: Database, href: '/power-bi', available: true },
+            { key: 'data-hub', label: 'Data Hub', icon: Database, href: '/data-hub', available: true },
         );
     }
 
