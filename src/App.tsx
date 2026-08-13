@@ -19,50 +19,49 @@ import Issues from './pages/Issues';
 import Reports from './pages/Reports';
 
 function App() {
-    return (
-        <AuthProvider>
-            <BrowserRouter basename="/project-monitoring">
-                <Routes>
-                    <Route path="/" element={<Login />} />
-                    <Route path="/forgot-password" element={<ForgotPassword />} />
-                    <Route path="/reset-password" element={<ResetPassword />} />
-                    <Route path="/setup-password" element={<ResetPassword />} />
-                    <Route path="/unauthorized" element={<Unauthorized />} />
-                    <Route element={<ProtectedRoute allowedRoles={['WEBMASTER_ADMIN']} />}>
-                        <Route path="/data-hub" element={<DataHub />} />
-                    </Route>
-                    {/* Protected Routes */}
-                    <Route element={<DashboardLayout />}>
-                        <Route element={<ProtectedRoute allowedRoles={['MDA_OFFICER']} />}>
-                            <Route path="/dashboard" element={<MDADashboard />} />
-                            <Route path="/mda/projects" element={<UserDashboard />} />
-                        </Route>
+  return (
+    <AuthProvider>
+      <BrowserRouter basename="/project-monitoring">
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/setup-password" element={<ResetPassword />} />
+          <Route path="/unauthorized" element={<Unauthorized />} />
+          <Route element={<ProtectedRoute allowedRoles={['WEBMASTER_ADMIN']} />}>
+            <Route path="/data-hub" element={<DataHub />} />
+          </Route>
+          {/* Protected Routes */}
+          <Route element={<DashboardLayout />}>
+            <Route element={<ProtectedRoute allowedRoles={['MDA_OFFICER']} />}>
+              <Route path="/dashboard" element={<MDADashboard />} />
+              <Route path="/mda/projects" element={<UserDashboard />} />
+            </Route>
 
-                        <Route element={<ProtectedRoute allowedRoles={['PPIMU_ADMIN']} />}>
-                            <Route path="/ppimu" element={<PPIMUDashboard />} />
-                            <Route path="/ppimu/approvals" element={<ApproverDashboard />} />
-                        </Route>
+            <Route element={<ProtectedRoute allowedRoles={['PPIMU_ADMIN']} />}>
+              <Route path="/ppimu" element={<PPIMUDashboard />} />
+              <Route path="/ppimu/approvals" element={<ApproverDashboard />} />
+            </Route>
 
-                        <Route element={<ProtectedRoute allowedRoles={['WEBMASTER_ADMIN']} />}>
-                            <Route path="/admin" element={<AdminDashboard />} />
-                            <Route path="/reports" element={<Reports />} />
-                        </Route>
+            <Route element={<ProtectedRoute allowedRoles={['WEBMASTER_ADMIN']} />}>
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/reports" element={<Reports />} />
+            </Route>
 
-                        <Route element={<ProtectedRoute allowedRoles={['WEBMASTER_ADMIN', 'PPIMU_ADMIN', 'MDA_OFFICER']} />}>
-                            <Route path="/projects" element={<Projects />} />
-                            <Route path="/issues" element={<Issues />} />
-                        </Route>
+            <Route element={<ProtectedRoute allowedRoles={['WEBMASTER_ADMIN', 'PPIMU_ADMIN', 'MDA_OFFICER']} />}>
+              <Route path="/projects" element={<Projects />} />
+              <Route path="/issues" element={<Issues />} />
+            </Route>
 
-                        <Route element={<ProtectedRoute allowedRoles={['WEBMASTER_ADMIN', 'PPIMU_ADMIN']} />}>
-                            <Route path="/mdas" element={<Mdas />} />
-                            <Route path="/users" element={<Users />} />
-                        </Route>
-                    </Route>
-                </Routes>
-            </BrowserRouter>
-        </AuthProvider>
-    );
+            <Route element={<ProtectedRoute allowedRoles={['WEBMASTER_ADMIN', 'PPIMU_ADMIN']} />}>
+              <Route path="/mdas" element={<Mdas />} />
+              <Route path="/users" element={<Users />} />
+            </Route>
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+  );
 }
 
 export default App;
-
