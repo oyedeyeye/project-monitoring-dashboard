@@ -19,6 +19,8 @@ export interface DashboardMetrics {
   avgProgress: number;
   /** Change in average progress vs. the previous period (percentage points). */
   avgProgressDelta: number;
+  /** Total active user accounts in the system */
+  usersCount?: number;
 }
 
 export interface StageBreakdownItem {

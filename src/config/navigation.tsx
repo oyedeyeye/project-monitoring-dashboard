@@ -7,6 +7,7 @@ import {
   Settings,
   Database,
   FileText,
+  Activity,
   type LucideIcon,
 } from 'lucide-react';
 import type { UserProfile } from '../types/api';
@@ -131,11 +132,14 @@ export function getNavItems(role: Role | null | undefined): NavItem[] {
       {
         key: 'data-hub', label: 'Data Hub', icon: Database, href: '/data-hub', available: true,
       },
+      {
+        key: 'system-health', label: 'System Health', icon: Activity, href: '/system-health', available: true,
+      },
     );
   }
 
   base.push({
-    key: 'settings', label: 'Settings', icon: Settings, href: '/settings', available: false,
+    key: 'settings', label: 'Settings', icon: Settings, href: '/settings', available: true,
   });
 
   return base;
