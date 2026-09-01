@@ -17,6 +17,8 @@ import Mdas from './pages/Mdas';
 import Users from './pages/Users';
 import Issues from './pages/Issues';
 import Reports from './pages/Reports';
+import Settings from './pages/Settings';
+import SystemHealth from './pages/SystemHealth';
 
 function App() {
   return (
@@ -51,11 +53,16 @@ function App() {
             <Route element={<ProtectedRoute allowedRoles={['WEBMASTER_ADMIN', 'PPIMU_ADMIN', 'MDA_OFFICER']} />}>
               <Route path="/projects" element={<Projects />} />
               <Route path="/issues" element={<Issues />} />
+              <Route path="/settings" element={<Settings />} />
             </Route>
 
             <Route element={<ProtectedRoute allowedRoles={['WEBMASTER_ADMIN', 'PPIMU_ADMIN']} />}>
               <Route path="/mdas" element={<Mdas />} />
               <Route path="/users" element={<Users />} />
+            </Route>
+            
+            <Route element={<ProtectedRoute allowedRoles={['WEBMASTER_ADMIN']} />}>
+              <Route path="/system-health" element={<SystemHealth />} />
             </Route>
           </Route>
         </Routes>

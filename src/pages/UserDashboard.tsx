@@ -157,8 +157,14 @@ function UserDashboard() {
           </h1>
           <p className="text-gray-500 mt-1">Manage and update your assigned projects and view submission history.</p>
         </div>
-        <Button onClick={handleRefresh} variant="ghost" size="sm" className="self-start sm:self-auto">
-          Refresh Data
+        <Button 
+          onClick={handleRefresh} 
+          variant="ghost" 
+          size="sm" 
+          className="self-start sm:self-auto"
+          disabled={projectsLoading || historyLoading}
+        >
+          {projectsLoading || historyLoading ? 'Refreshing...' : 'Refresh Data'}
         </Button>
       </div>
 

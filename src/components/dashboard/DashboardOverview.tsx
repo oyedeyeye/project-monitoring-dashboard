@@ -42,12 +42,12 @@ function DashboardOverview({
       <DashboardHeader name={name} subtitle={subtitle} notificationCount={data.issues.openCount} />
 
       {/* KPI strip */}
-      <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${
+      <div className={`grid grid-cols-2 gap-4 ${
         isMdaOfficer
           ? 'lg:grid-cols-3'
           : data.pendingApprovalsCount !== undefined
-            ? 'lg:grid-cols-5'
-            : 'lg:grid-cols-4'
+            ? 'lg:grid-cols-4 xl:grid-cols-7'
+            : 'lg:grid-cols-4 xl:grid-cols-6'
       }`}
       >
         {!isMdaOfficer && (
@@ -73,6 +73,20 @@ function DashboardOverview({
           accent={data.pendingApprovalsCount > 0}
           onClick={onPendingApprovalsClick}
         />
+        )}
+        {!isMdaOfficer && (
+          <>
+            <MetricCard
+              value={metrics.usersCount?.toLocaleString() || '0'}
+              label="Total Users"
+              caption="Active Accounts"
+            />
+            <MetricCard
+              value="--"
+              label="Total Visitors"
+              caption="Integration Pending"
+            />
+          </>
         )}
       </div>
 

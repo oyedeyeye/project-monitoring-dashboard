@@ -174,8 +174,13 @@ function Projects() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
-          <Button onClick={() => refetch()} variant="ghost" size="sm">
-            Refresh
+          <Button 
+            onClick={() => refetch()} 
+            variant="ghost" 
+            size="sm"
+            disabled={loading}
+          >
+            {loading ? 'Refreshing...' : 'Refresh'}
           </Button>
         </div>
       </div>

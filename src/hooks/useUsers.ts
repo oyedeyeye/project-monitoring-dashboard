@@ -11,6 +11,7 @@ export interface FlattenedUser {
   fullName: string;
   role: 'WEBMASTER_ADMIN' | 'PPIMU_ADMIN' | 'MDA_OFFICER' | null;
   lastEditActivityDate: string | null;
+  isActive: boolean;
 }
 
 export const useUsers = (initialPage = 1, initialLimit = 25) => {
@@ -39,6 +40,7 @@ export const useUsers = (initialPage = 1, initialLimit = 25) => {
       fullName: profileObj.fullName || '',
       role: profileObj.role || null,
       lastEditActivityDate: u.lastEditActivityDate || null,
+      isActive: u.isActive !== false,
     };
   });
 
@@ -88,6 +90,16 @@ export const useUsers = (initialPage = 1, initialLimit = 25) => {
     },
   });
 
+  const toggleStatusMutation = useMutation({
+    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
+      await api.patch(`/users/${id}/status`, { isActive });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['adminData'] });
+    },
+  });
+
   return {
     users: mappedUsers,
     meta,
@@ -101,6 +113,7 @@ export const useUsers = (initialPage = 1, initialLimit = 25) => {
       email, fullName, role, mdaId, password,
     }),
     updateUser: (id: string, updateData: { email?: string; fullName?: string; role?: string; mdaId?: string | null; password?: string }) => updateMutation.mutateAsync({ id, updateData }),
+    toggleUserStatus: (id: string, isActive: boolean) => toggleStatusMutation.mutateAsync({ id, isActive }),
     deleteUser: (id: string) => deleteMutation.mutateAsync(id),
     refetch,
   };

@@ -48,6 +48,21 @@ function Users() {
     }
   };
 
+  const handleToggleStatus = async (user: FlattenedUser, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const action = user.isActive ? 'suspend' : 'activate';
+    if (window.confirm(`Are you sure you want to ${action} user ${user.fullName || user.email}?`)) {
+      try {
+        // @ts-ignore
+        await toggleUserStatus(user.id, !user.isActive);
+        refetch();
+      } catch (err: any) {
+        console.error(`Error trying to ${action} user:`, err);
+        alert(err.response?.data?.message || `Failed to ${action} user.`);
+      }
+    }
+  };
+
   const filteredUsers = users.filter((user) => user.fullName.toLowerCase().includes(searchTerm.toLowerCase())
         || user.email.toLowerCase().includes(searchTerm.toLowerCase())
         || user.mdaName.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -58,25 +73,22 @@ function Users() {
       accessor: (item: FlattenedUser) => (
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-orange-100 text-orange-700 font-semibold">
-            {(item.fullName?.charAt(0) || item.email?.charAt(0) || 'U').toUpperCase()}
+            {(item.fullName || item.email).charAt(0).toUpperCase()}
           </div>
           <div>
-            <div className="font-semibold text-gray-800">{item.fullName || 'No Name'}</div>
-            <div className="text-xs text-gray-400">{item.email}</div>
+            <div className="font-semibold text-gray-900">{item.fullName || 'No Name'}</div>
+            <div className="text-sm text-gray-500">{item.email}</div>
           </div>
         </div>
       ),
     },
     {
       header: 'Role',
-      accessor: (item: FlattenedUser) => {
-        const { role } = item;
-        const variant = role === 'WEBMASTER_ADMIN' ? 'error'
-          : role === 'PPIMU_ADMIN' ? 'success' : 'info';
-        const label = role === 'WEBMASTER_ADMIN' ? 'Webmaster Admin'
-          : role === 'PPIMU_ADMIN' ? 'PPIMU Admin' : 'MDA Officer';
-        return <Badge variant={variant}>{label}</Badge>;
-      },
+      accessor: (item: FlattenedUser) => (
+        <Badge variant={item.role === 'WEBMASTER_ADMIN' ? 'success' : item.role === 'PPIMU_ADMIN' ? 'info' : 'neutral'}>
+          {item.role ? item.role.replace('_', ' ') : 'NO ROLE'}
+        </Badge>
+      ),
     },
     {
       header: 'MDA',
@@ -84,6 +96,14 @@ function Users() {
         <span className="text-gray-600 font-medium">
           {item.mdaName || 'N/A'}
         </span>
+      ),
+    },
+    {
+      header: 'Status',
+      accessor: (item: FlattenedUser) => (
+        <Badge variant={item.isActive ? 'success' : 'error'}>
+          {item.isActive ? 'Active' : 'Suspended'}
+        </Badge>
       ),
     },
     {
@@ -100,6 +120,17 @@ function Users() {
       header: 'Actions',
       accessor: (item: FlattenedUser) => (
         <div className="flex items-center gap-2">
+          {profile?.id !== item.id && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={(e) => handleToggleStatus(item, e)}
+              title={item.isActive ? "Suspend User" : "Activate User"}
+              className="p-1.5"
+            >
+              {item.isActive ? 'Suspend' : 'Activate'}
+            </Button>
+          )}
           <Button
             size="sm"
             variant="outline"
